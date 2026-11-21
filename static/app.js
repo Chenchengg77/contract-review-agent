@@ -678,7 +678,7 @@ async function checkAuth() {
 
 function applyUser(user) {
   document.getElementById('navUser').textContent = '👤 ' + user.username;
-  document.getElementById('navAdmin').classList.toggle('hidden', user.role !== 'admin');
+  document.getElementById('navAdmin').style.display = user.role === 'admin' ? 'flex' : 'none';
 }
 
 function fmtTime(ts) {
