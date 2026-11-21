@@ -1,0 +1,3384 @@
+{
+  "version": 1,
+  "contracts": [
+    {
+      "file": "承揽_承揽合同_GF-2000-0303.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "第八条 结算方式及期限",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "仅有结算条款标题，结算方式与期限留空待填，缺付款方式与时间要素"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "第十二条 违约责任",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "违约责任条款存在，但违约金比例、计算基数均留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "第十三条 合同争议的解决方式",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "列出仲裁/诉讼两种方式但未选定（'按下列＿种方式解决'留空），管辖未确定"
+        },
+        {
+          "clause": "保密条款",
+          "present": true,
+          "evidence": "第四条 定作人提供技术资料、图纸等的时间、办法及保密要求",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "保密要求仅作为技术资料条款的一部分出现，未约定保密范围、期限与违约责任"
+        },
+        {
+          "clause": "知识产权",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无成果知识产权归属、使用许可或第三方侵权责任条款"
+        },
+        {
+          "clause": "合同终止",
+          "present": true,
+          "evidence": "第十条 定作人解除承揽合同应及时书面通知承揽人",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "仅约定定作人单方解除及书面通知，无提前通知期、解除后的结算与善后安排"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "无赔偿范围、责任上限或间接损失排除条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": true,
+          "evidence": "第七条 工作成果检验标准、方法和期限",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "检验标准、方法和期限均留空待填"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "第一条 承揽项目、数量、报酬及交付期限",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "交付期限在表格中列示但留空，交付物清单需另行填写"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "无发票类型、税率或开票约定"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "无竞业限制或禁止同业竞争条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "无数据处理、安全保护义务或跨境传输条款"
+        },
+        {
+          "clause": "不可抗力",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "无不可抗力定义、通知义务或免责条款"
+        }
+      ]
+    },
+    {
+      "file": "买卖_家具买卖合同_GF-2000-0105.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "第九条 付款方式及期限",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "付款方式及期限留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "第十条 违约责任",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "违约责任条款存在，但违约金比例与计算方式留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "第十一条 合同争议的解决方式",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "列出仲裁/诉讼两种方式但未选定（'按下列第＿种方式解决'留空）"
+        },
+        {
+          "clause": "保密条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "无保密范围、保密期限或违约责任条款"
+        },
+        {
+          "clause": "知识产权",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "无成果知识产权归属或第三方侵权责任条款"
+        },
+        {
+          "clause": "合同终止",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "无合同解除条件、提前通知期或善后结算条款"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "无赔偿范围或责任上限条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": true,
+          "evidence": "第八条 检验标准、方法及提出异议的期限",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "检验标准、方法及提出异议的期限均留空待填"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "第五条 交货时间 / 第六条 交（提）货方式、地点",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "交货时间、交货方式与地点均留空待填"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "无发票类型、税率或开票约定"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "无竞业限制或禁止同业竞争条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "无数据处理或安全保护义务条款"
+        },
+        {
+          "clause": "不可抗力",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "无不可抗力定义、通知义务或免责条款"
+        }
+      ]
+    },
+    {
+      "file": "租赁_房屋租赁合同.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "五、租金及支付方式",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "租金金额、支付时间、支付方式均留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "十二、违约责任",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "违约金金额与计算倍数均留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "十六、争议解决方式",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "列出仲裁/诉讼两种方式但未选定（'第＿种方式'留空）"
+        },
+        {
+          "clause": "保密条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无保密范围、保密期限或违约责任条款"
+        },
+        {
+          "clause": "知识产权",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "无知识产权归属或第三方侵权责任条款"
+        },
+        {
+          "clause": "合同终止",
+          "present": true,
+          "evidence": "十三、合同解除",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "解除情形与善后结算较完整，但通知期、返还期限留空待填"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "无赔偿范围或责任上限条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "租赁合同以交付交验代替成果验收，无独立验收标准与期限条款"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "十一、房屋的交付及返还",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "交付时间留空，交付以附件清单交验为准"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "无发票类型、税率或开票约定"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "无竞业限制或禁止同业竞争条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "无数据处理或安全保护义务条款"
+        },
+        {
+          "clause": "不可抗力",
+          "present": true,
+          "evidence": "十五、不可抗力等免责条款",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "有免责与解除后果约定，但未明确不可抗力定义与通知义务"
+        }
+      ]
+    },
+    {
+      "file": "买卖_二手车买卖合同_GF-2015-0120.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "第二条\t车辆价款、过户手续费及支付时间、方式",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "第六条\t违约责任",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "第七条\t合同争议的解决方式",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "保密条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "知识产权",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "合同终止",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "第三条\t车辆的过户、交付及风险承担",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "不可抗力",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        }
+      ]
+    },
+    {
+      "file": "买卖_农副产品买卖合同_GF-2025-0151.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "第四条 合同价款",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "第十二条 违约责任",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "第十六条 法律适用及争议解决",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "保密条款",
+          "present": true,
+          "evidence": "第九条 保密要求",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "知识产权",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "合同终止",
+          "present": true,
+          "evidence": "第十三条 合同变更、终止",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": true,
+          "evidence": "第六条 产品验收",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "第三条 交货要求",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "不可抗力",
+          "present": true,
+          "evidence": "第十四条 不可抗力",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        }
+      ]
+    },
+    {
+      "file": "买卖_木材订货合同_GF-2000-0104.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "3. 结算方式",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键内容留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "9. 违约责任",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键内容留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "10. 合同争议的解决方式",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键内容留空待填"
+        },
+        {
+          "clause": "保密条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "知识产权",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "合同终止",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": true,
+          "evidence": "6. 检验的标准、地点及期限",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键内容留空待填"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "4. 交（提）货地点、方式",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键内容留空待填"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "不可抗力",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        }
+      ]
+    },
+    {
+      "file": "买卖_煤炭买卖合同_GF-1999-0109.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "(全文) 结算",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "(全文) 违约责任",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "(全文) 争议",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "保密条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "知识产权",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "合同终止",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": true,
+          "evidence": "(全文) 验收",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "一、收货人名称、发到站、品种规格、质量、交（提）货时间、数量：\t签订时间：\t年\t月\t日",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "不可抗力",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        }
+      ]
+    },
+    {
+      "file": "其他_中国公民出境旅游合同_GF-2007-2602.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "(全文) 报酬",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "六、违约责任",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "第二十三条\t争议的解决方式",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "保密条款",
+          "present": true,
+          "evidence": "(全文) 保密",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "知识产权",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "合同终止",
+          "present": true,
+          "evidence": "五、合同的解除",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "交付条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "发票条款",
+          "present": true,
+          "evidence": "(全文) 发票",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "不可抗力",
+          "present": true,
+          "evidence": "(全文) 不可抗力",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        }
+      ]
+    },
+    {
+      "file": "其他_广告发布业务合同_GF-92-0305.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "八、甲方应在 \t年 \t月 \t日前将广告发布费付给乙方，付款方式 \t。",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "九、违约责任 \t。十、解决合同纠纷的方式：本合同在履行过程中发生争议，由当事人双方协商解决。协商",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "九、违约责任 \t。十、解决合同纠纷的方式：本合同在履行过程中发生争议，由当事人双方协商解决。协商",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "保密条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "知识产权",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "合同终止",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "交付条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "不可抗力",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        }
+      ]
+    },
+    {
+      "file": "其他_新能源场站并网调度协议_GF-2021-0513.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "第17章  违约责任",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "第20章  争议的解决",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "保密条款",
+          "present": true,
+          "evidence": "22.1 保密",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "知识产权",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "合同终止",
+          "present": true,
+          "evidence": "第19章  协议的变更、转让和解除",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": true,
+          "evidence": "11.4.2 改造设备须经过调试验收，确认合格后按规定程序投入运行。",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "9.4.2 新能源场站检修工作需延期的，须在已批复的检修工期过半前向电力调度机构申请办理延期手续。",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": true,
+          "evidence": "第14章  电力监控系统安全防护",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "不可抗力",
+          "present": true,
+          "evidence": "第16章  不可抗力",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        }
+      ]
+    },
+    {
+      "file": "其他_水路货物运输合同_GF-91-0404.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "费用结算方式",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键内容留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "特约事项和违约责任",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键内容留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "保密条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "知识产权",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "合同终止",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "交付条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "不可抗力",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        }
+      ]
+    },
+    {
+      "file": "其他_铁路货物运输合同_GF-91-0402.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "违约金",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "争议解决",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "保密条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "知识产权",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "合同终止",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "交付条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "不可抗力",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        }
+      ]
+    },
+    {
+      "file": "建设_家庭居室装饰装修工程施工合同_GF-2000-0207.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "第十一条\t工程款支付方式",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "第十二条\t违约责任",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "第十三条\t合同争议的解决方式",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "保密条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "知识产权",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "合同终止",
+          "present": true,
+          "evidence": "(全文) 终止",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": true,
+          "evidence": "第十条\t工程验收和保修",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "第八条\t工期延误",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "发票条款",
+          "present": true,
+          "evidence": "(全文) 发票",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "不可抗力",
+          "present": true,
+          "evidence": "(全文) 不可抗力",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        }
+      ]
+    },
+    {
+      "file": "建设_建设工程施工合同_GF-2017-0201.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "3.5.4 分包合同价款",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "16.3 第三人造成的违约",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "5.5 质量争议检测",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "保密条款",
+          "present": true,
+          "evidence": "(全文) 保密",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "知识产权",
+          "present": true,
+          "evidence": "1.11.4 承包人在施工过程中所采用的专利、专有技术、技术秘密的使用费的承担方式：",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "合同终止",
+          "present": true,
+          "evidence": "17.4 因不可抗力解除合同",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": true,
+          "evidence": "13.1.2 监理人不能按时进行验收时，应提前 \t小时提交书面延期要求。关于延期最长不得超过：\t小时。",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "一、工程概况二、合同工期三、质量标准",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": true,
+          "evidence": "(全文) 数据",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "不可抗力",
+          "present": true,
+          "evidence": "17.4 因不可抗力解除合同",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        }
+      ]
+    },
+    {
+      "file": "建设_建设工程监理合同_GF-2012-0202.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "五、签约酬金",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "(全文) 违约责任",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "(全文) 争议",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "保密条款",
+          "present": true,
+          "evidence": "8.6 保密",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "知识产权",
+          "present": true,
+          "evidence": "8.8 著作权",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "合同终止",
+          "present": true,
+          "evidence": "(全文) 终止",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": true,
+          "evidence": "(全文) 验收",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "(全文) 移交",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": true,
+          "evidence": "(全文) 数据",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "不可抗力",
+          "present": true,
+          "evidence": "(全文) 不可抗力",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        }
+      ]
+    },
+    {
+      "file": "建设_建设工程造价咨询合同_GF-2015-0212.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "五、酬金或计取方式六、合同文件的构成七、词语定义",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "(全文) 违约责任",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "(全文) 争议",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "保密条款",
+          "present": true,
+          "evidence": "(全文) 保密",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "知识产权",
+          "present": true,
+          "evidence": "8.5 知识产权",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "合同终止",
+          "present": true,
+          "evidence": "6.3 合同终止",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "(全文) 移交",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": true,
+          "evidence": "(全文) 数据",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "不可抗力",
+          "present": true,
+          "evidence": "6.1.2 除不可抗力外，因非咨询人原因导致本合同履行期限延长、内容增加时，附加工作酬金按下列方法确定：\t。",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        }
+      ]
+    },
+    {
+      "file": "建设_水利水电土建工程施工合同_GF-2000-0208.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "33.4\t支付时间",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "十八、违约和索赔",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "44.1 款的规定提出按合同争议处理的要求。",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "保密条款",
+          "present": true,
+          "evidence": "(全文) 保密",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "知识产权",
+          "present": true,
+          "evidence": "(全文) 知识产权",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "合同终止",
+          "present": true,
+          "evidence": "(全文) 终止",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": true,
+          "evidence": "52.5\t部分工程验收",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "20.3\t承包人的工期延误本款补充下表。",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "不可抗力",
+          "present": true,
+          "evidence": "(全文) 不可抗力",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        }
+      ]
+    },
+    {
+      "file": "承揽_修缮修理合同_GF-2000-0307.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "第一条\t修缮修理项目、数量、报酬",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "(全文) 违约责任",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "(全文) 争议",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "保密条款",
+          "present": true,
+          "evidence": "第六条\t定作人提供技术资料、图纸的时间、办法及保密要求：",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "知识产权",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "合同终止",
+          "present": true,
+          "evidence": "(全文) 解除",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": true,
+          "evidence": "第三条\t定作人检验承揽人提供材料的标准、方法、时间及地点：",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "(全文) 交付",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "不可抗力",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        }
+      ]
+    },
+    {
+      "file": "承揽_加工合同_GF-2000-0301.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "第一条\t加工物、数量、报酬、交货期限",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "第十六条\t违约责任：",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "(全文) 争议",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "保密条款",
+          "present": true,
+          "evidence": "第七条\t定作人提供技术资料、图纸的时间、办法及保密要求：",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "知识产权",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "合同终止",
+          "present": true,
+          "evidence": "第十四条\t本合同解除的条件：",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": true,
+          "evidence": "第三条\t承揽人对定作人提供的材料的检验标准、时间及提出异议的期限：",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "第一条\t加工物、数量、报酬、交货期限",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "不可抗力",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        }
+      ]
+    },
+    {
+      "file": "承揽_定作合同_GF-2000-0302.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "第一条\t定作物、数量、报酬、交付期限",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "第十七条\t违约责任：",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "(全文) 争议",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "保密条款",
+          "present": true,
+          "evidence": "(全文) 保密",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "知识产权",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "合同终止",
+          "present": true,
+          "evidence": "第十五条\t本合同解除的条件：",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": true,
+          "evidence": "第十一条\t定作物检验标准、方法、地点及期限 :",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "第一条\t定作物、数量、报酬、交付期限",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "不可抗力",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        }
+      ]
+    },
+    {
+      "file": "承揽_测绘合同_GF-2000-0306.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "(全文) 结算",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "第十二条\t甲方违约责任",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "(全文) 争议",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "保密条款",
+          "present": true,
+          "evidence": "(全文) 保密",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "知识产权",
+          "present": true,
+          "evidence": "第九条\t对乙方测绘成果的所有权、使用权和著作权归属的约定：",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "合同终止",
+          "present": true,
+          "evidence": "(全文) 终止",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": true,
+          "evidence": "(全文) 验收",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "第七条\t测绘项目完成工期",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "不可抗力",
+          "present": true,
+          "evidence": "6.\t 第十四条   由于不可抗力，致使合同无法履行时，双方应按有关法律规定及时协商处理。第十五条   其他约定：",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        }
+      ]
+    },
+    {
+      "file": "服务_上海地下管线测量技术服务合同.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "第六条　支付方式",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "第十条　违约责任",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "第十二条　争议解决方式",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "保密条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "知识产权",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "合同终止",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": true,
+          "evidence": "2．检验报告交付时间为：                                。",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "第七条　报告交付",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "不可抗力",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        }
+      ]
+    },
+    {
+      "file": "服务_北京专业技术培训服务合同.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "第二条  培训收费",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "第六条  违约责任",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "第七条  争议处理",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "保密条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "知识产权",
+          "present": true,
+          "evidence": "六、甲方不得利用培训服务过程以任何方式向乙方传播、讲授违反相关法律法规的培训内容，使用的培训资料不得侵犯知识产权。",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "合同终止",
+          "present": true,
+          "evidence": "(全文) 终止",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "(全文) 交付",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "发票条款",
+          "present": true,
+          "evidence": "(全文) 发票",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": true,
+          "evidence": "(全文) 个人信息",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "不可抗力",
+          "present": true,
+          "evidence": "(全文) 不可抗力",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        }
+      ]
+    },
+    {
+      "file": "服务_江苏住宅物业委托服务合同.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "5.年度财务预算及财务报告（实行酬金制时）",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "第六章 违约责任",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "第二十四条  争议处理",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "保密条款",
+          "present": true,
+          "evidence": "2.物业管理项目的档案资料，并对业主个人信息和资料负有保密义务。",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "知识产权",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "合同终止",
+          "present": true,
+          "evidence": "第二十条  合同的终止",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": true,
+          "evidence": "2.物业竣工验收资料。",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "2.开发建设单位未售出或未交付的房屋于             交纳。",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": true,
+          "evidence": "2.物业管理项目的档案资料，并对业主个人信息和资料负有保密义务。",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "不可抗力",
+          "present": true,
+          "evidence": "第二十三条  不可抗力",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        }
+      ]
+    },
+    {
+      "file": "服务_浙江工程测绘技术服务合同.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "第五条 测绘收费",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "第十一条  违约责任",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "第十四条  纠纷解决",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "保密条款",
+          "present": true,
+          "evidence": "(全文) 保密",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "知识产权",
+          "present": true,
+          "evidence": "(全文) 著作权",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "合同终止",
+          "present": true,
+          "evidence": "(全文) 终止",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": true,
+          "evidence": "10.《测绘成果质量检查与验收》GB/T 24356",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "第六条 项目工期",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "发票条款",
+          "present": true,
+          "evidence": "(全文) 发票",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "不可抗力",
+          "present": true,
+          "evidence": "第十二条  不可抗力",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        }
+      ]
+    },
+    {
+      "file": "租赁_冷藏冷冻食品仓库租赁合同.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "第三条  租金、水电费以及税费支付",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "2.乙方的违约责任",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "(全文) 争议",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "保密条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "知识产权",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "合同终止",
+          "present": true,
+          "evidence": "第九条  合同解除条款",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": true,
+          "evidence": "(全文) 检验",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "第四条  冷库场地的交付",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": true,
+          "evidence": "(全文) 数据",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "不可抗力",
+          "present": true,
+          "evidence": "(全文) 不可抗力",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        }
+      ]
+    },
+    {
+      "file": "租赁_夜市场地租赁经营合同.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "四、夜市经济受季节影响较大，建议双方当事人充分考虑当地气候特点，合理约定租赁期限、租金等事项。",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "2.乙方的违约责任",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "(全文) 争议",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "保密条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "知识产权",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "合同终止",
+          "present": true,
+          "evidence": "5.本合同终止后，甲方收取的保证金扣除应由乙方承担的金额外，剩余部分应于合同终止后    日内无息归还乙方。",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "第五条  租赁场地的交付",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "不可抗力",
+          "present": true,
+          "evidence": "第十三条  不可抗力",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        }
+      ]
+    },
+    {
+      "file": "租赁_建筑施工物资租赁合同_GF-2000-0604.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "第四条\t租金、租金支付方式和期限",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "第十一条\t违约责任 一、出租人违约责任：",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "(全文) 争议",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "保密条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "知识产权",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "合同终止",
+          "present": true,
+          "evidence": "第十条\t本合同解除的条件：",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": true,
+          "evidence": "第六条\t租赁物资交付的时间、地点及验收方法：",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "第六条\t租赁物资交付的时间、地点及验收方法：",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "不可抗力",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        }
+      ]
+    },
+    {
+      "file": "租赁_深圳市公共租赁住房租赁合同.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "4.1  租金支付方式：",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "(全文) 违约",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "(全文) 争议",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "保密条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "知识产权",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "合同终止",
+          "present": true,
+          "evidence": "11.1  发生以下情形之一的，双方当事人均有权单方解除合同：",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": true,
+          "evidence": "(全文) 验收",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "(全文) 交付",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "不可抗力",
+          "present": true,
+          "evidence": "(全文) 不可抗力",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "条款存在，关键要素留空待填"
+        }
+      ]
+    },
+    {
+      "file": "示例_填写版_家具买卖合同_合规.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "付款条款",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "填充示例"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "违约金",
+          "verdict": "合规",
+          "severity": "低",
+          "reason": "填充示例"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "争议解决",
+          "verdict": "合规",
+          "severity": "低",
+          "reason": "填充示例"
+        },
+        {
+          "clause": "保密条款",
+          "present": true,
+          "evidence": "保密条款",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "填充示例"
+        },
+        {
+          "clause": "知识产权",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "合同终止",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "责任上限",
+          "present": true,
+          "evidence": "责任上限",
+          "verdict": "合规",
+          "severity": "低",
+          "reason": "填充示例"
+        },
+        {
+          "clause": "验收条款",
+          "present": true,
+          "evidence": "验收条款",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "填充示例"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "交付条款",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "填充示例"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "竞业限制",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "数据合规",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "不可抗力",
+          "present": true,
+          "evidence": "不可抗力",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "填充示例"
+        }
+      ]
+    },
+    {
+      "file": "示例_填写版_家具买卖合同_冲突.docx",
+      "items": [
+        {
+          "clause": "付款条款",
+          "present": true,
+          "evidence": "付款条款",
+          "verdict": "冲突",
+          "severity": "高",
+          "reason": "填充示例"
+        },
+        {
+          "clause": "违约金",
+          "present": true,
+          "evidence": "违约金",
+          "verdict": "冲突",
+          "severity": "高",
+          "reason": "填充示例"
+        },
+        {
+          "clause": "争议解决",
+          "present": true,
+          "evidence": "争议解决",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "填充示例"
+        },
+        {
+          "clause": "保密条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "知识产权",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "合同终止",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "责任上限",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "高",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "验收条款",
+          "present": true,
+          "evidence": "验收条款",
+          "verdict": "冲突",
+          "severity": "高",
+          "reason": "填充示例"
+        },
+        {
+          "clause": "交付条款",
+          "present": true,
+          "evidence": "交付条款",
+          "verdict": "偏离",
+          "severity": "中",
+          "reason": "填充示例"
+        },
+        {
+          "clause": "发票条款",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "竞业限制",
+          "present": true,
+          "evidence": "竞业限制",
+          "verdict": "冲突",
+          "severity": "高",
+          "reason": "填充示例"
+        },
+        {
+          "clause": "数据合规",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        },
+        {
+          "clause": "不可抗力",
+          "present": false,
+          "evidence": "",
+          "verdict": "缺失",
+          "severity": "中",
+          "reason": "全合同无此类条款"
+        }
+      ]
+    }
+  ]
+}

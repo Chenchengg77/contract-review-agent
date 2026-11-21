@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>合同智能审查 Agent</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { brand: { 500: '#2563eb', 600: '#1d4ed8', 700: '#1e40af' } } } },
+    };
+  </script>
+  <style>
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeUp .4s ease both; }
+    .nav-link { transition: background .15s ease, color .15s ease; }
+    .nav-link.active { background: #1d4ed8; color: #fff; }
+    .hover-card { transition: transform .2s ease, box-shadow .2s ease; }
+    .hover-card:hover { transform: translateY(-3px); box-shadow: 0 14px 28px -12px rgba(37,99,235,.25); }
+    .hero-bg {
+      background: url('images/hero-bg.svg') center / cover no-repeat,
+                  linear-gradient(125deg, #1e3a8a, #2563eb, #4f46e5, #1d4ed8);
+    }
+    tr.diff-modify td { background: #eff6ff; }
+    tr.diff-add td { background: #f0fdf4; }
+    tr.diff-del td { background: #fef2f2; }
+
+    /* ---- 登录页动效 ---- */
+    @keyframes blobFloat {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(26px, -30px) scale(1.08); }
+      66% { transform: translate(-20px, 20px) scale(0.95); }
+    }
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    @keyframes dotDrift {
+      0% { transform: translateY(0); opacity: .35; }
+      50% { transform: translateY(-16px); opacity: .9; }
+      100% { transform: translateY(0); opacity: .35; }
+    }
+    .auth-blob { animation: blobFloat 15s ease-in-out infinite; }
+    .auth-blob-2 { animation-delay: -5s; }
+    .auth-blob-3 { animation-delay: -9s; }
+    .text-gradient {
+      background: linear-gradient(100deg, #2563eb, #7c3aed, #db2777, #2563eb);
+      background-size: 300% auto;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: gradientShift 7s ease infinite;
+    }
+    .btn-shimmer { position: relative; overflow: hidden; }
+    .btn-shimmer::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(110deg, transparent 35%, rgba(255,255,255,.45) 50%, transparent 65%);
+      background-size: 250% 100%;
+      opacity: 0;
+    }
+    .btn-shimmer:hover::after { opacity: 1; animation: shimmer 1.1s linear infinite; }
+    .auth-dot {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      border-radius: 9999px;
+      background: #60a5fa;
+      animation: dotDrift 7s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .auth-input:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+    .auth-fade { animation: fadeUp 0.5s ease both; }
+    .auth-fade-2 { animation-delay: 0.08s; }
+    .auth-fade-3 { animation-delay: 0.16s; }
+    .auth-fade-4 { animation-delay: 0.24s; }
+    .auth-grid {
+      background-image: radial-gradient(circle, rgba(37, 99, 235, 0.09) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-900 antialiased">
+
+<div class="flex min-h-screen">
+  <!-- 侧边栏 -->
+  <aside class="w-56 shrink-0 bg-slate-900 text-slate-300 flex flex-col sticky top-0 h-screen">
+    <div class="px-5 py-5 text-white text-lg font-bold flex items-center gap-2 border-b border-white/10">
+      <span class="text-2xl">⚖️</span> 合同审查
+    </div>
+    <nav class="flex-1 p-3 space-y-1 text-sm">
+      <a href="#/home"    data-nav="home"    class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10">🏠 首页</a>
+      <a href="#/review"  data-nav="review"  class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10">🔍 合同审查</a>
+      <a href="#/chat"    data-nav="chat"    class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10">💬 AI 对话</a>
+      <a href="#/compare" data-nav="compare" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10">⚖️ 合同对比</a>
+      <a href="#/templates" data-nav="templates" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10">📄 合同模板</a>
+      <a href="#/eval"    data-nav="eval"    class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10">📊 评估数据</a>
+      <a href="#/about"   data-nav="about"   class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10">📖 关于</a>
+    </nav>
+    <div class="border-t border-white/10 p-3">
+      <div class="flex items-center justify-between gap-2">
+        <span id="navUser" class="text-sm text-slate-300 truncate"></span>
+        <button id="navLogout" class="text-xs text-slate-400 hover:text-white shrink-0">退出</button>
+      </div>
+    </div>
+    <div class="p-4 text-xs text-slate-500 border-t border-white/10">
+      单份约 2 秒 · 成本约 1 分钱
+    </div>
+  </aside>
+
+  <!-- 主内容 -->
+  <main class="flex-1 min-w-0 overflow-auto">
+    <!-- 首页 -->
+    <section id="page-home" data-page="home" class="hidden">
+      <header class="hero-bg text-white">
+        <div class="max-w-5xl mx-auto px-8 py-16">
+          <h1 class="text-4xl font-extrabold mb-3">合同智能审查 Agent</h1>
+          <p class="text-blue-100 max-w-2xl mb-8">上传合同，自动抽取 13 类条款、判定风险，生成带原文定位的审查报告。</p>
+          <div class="flex gap-3">
+            <a href="#/review" class="bg-white text-brand-700 font-semibold px-5 py-2.5 rounded-lg">开始审查</a>
+            <a href="#/compare" class="border border-white/40 px-5 py-2.5 rounded-lg hover:bg-white/10">合同对比</a>
+          </div>
+        </div>
+      </header>
+      <div class="max-w-5xl mx-auto px-8 py-12">
+        <h2 class="text-xl font-bold mb-6">核心能力</h2>
+        <div class="grid md:grid-cols-4 gap-5">
+          <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-100 hover-card"><div class="text-2xl mb-2">📊</div><h3 class="font-semibold">评估驱动</h3><p class="text-sm text-slate-500 mt-1">403 条评估集，数字可复现</p></div>
+          <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-100 hover-card"><div class="text-2xl mb-2">🛡️</div><h3 class="font-semibold">防幻觉</h3><p class="text-sm text-slate-500 mt-1">证据必须原文可搜</p></div>
+          <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-100 hover-card"><div class="text-2xl mb-2">👤</div><h3 class="font-semibold">人工确认</h3><p class="text-sm text-slate-500 mt-1">高风险条款人批准后才进报告</p></div>
+          <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-100 hover-card"><div class="text-2xl mb-2">⚡</div><h3 class="font-semibold">成本透明</h3><p class="text-sm text-slate-500 mt-1">约 2 秒、1 分钱</p></div>
+        </div>
+        <div class="mt-12 flex justify-center"><img src="images/architecture.svg" alt="审查流程" class="w-56" /></div>
+      </div>
+    </section>
+
+    <!-- 合同审查 -->
+    <section id="page-review" data-page="review" class="hidden">
+      <div class="max-w-5xl mx-auto px-8 py-10">
+        <h1 class="text-2xl font-bold mb-6">🔍 合同审查</h1>
+        <!-- 选择合同 -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+          <div class="flex flex-col md:flex-row gap-4">
+            <div class="flex-1">
+              <label class="block text-sm font-medium text-slate-700 mb-2">上传合同（.docx）</label>
+              <input id="fileInput" type="file" accept=".docx" class="block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-brand-600 file:text-white hover:file:bg-brand-700 cursor-pointer" />
+            </div>
+            <div class="flex-1">
+              <label class="block text-sm font-medium text-slate-700 mb-2">或选示例合同</label>
+              <select id="sampleSelect" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+                <option value="">加载中…</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 审查配置 -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+          <h2 class="font-semibold mb-4">审查配置</h2>
+          <div class="grid md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">审查视角</label>
+              <select id="reviewPerspective" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+                <option value="甲方（买方/委托方）">甲方（买方/委托方）</option>
+                <option value="乙方（卖方/承揽方）">乙方（卖方/承揽方）</option>
+              </select>
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-sm font-medium text-slate-700 mb-2">关注点（可选）</label>
+              <input id="reviewFocus" type="text" placeholder="例如：重点关注付款、违约责任与争议解决" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" />
+            </div>
+          </div>
+          <button id="startReviewBtn" class="mt-4 bg-brand-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-brand-700">开始审查</button>
+        </div>
+
+        <!-- 进度面板 -->
+        <div id="progressPanel" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+          <div class="flex justify-between text-sm mb-2">
+            <span class="font-medium">审查进度</span>
+            <span id="progressPct" class="text-brand-600 font-semibold">0%</span>
+          </div>
+          <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div id="progressBar" class="h-full bg-brand-600" style="width:0%;transition:width .3s ease"></div>
+          </div>
+          <div id="stageList" class="mt-4 grid grid-cols-4 gap-2 text-xs">
+            <div data-stage="0" class="stage px-2 py-1.5 rounded-lg bg-slate-50 text-slate-400 text-center">① 解析</div>
+            <div data-stage="1" class="stage px-2 py-1.5 rounded-lg bg-slate-50 text-slate-400 text-center">② 抽取</div>
+            <div data-stage="2" class="stage px-2 py-1.5 rounded-lg bg-slate-50 text-slate-400 text-center">③ 判定</div>
+            <div data-stage="3" class="stage px-2 py-1.5 rounded-lg bg-slate-50 text-slate-400 text-center">④ 修订</div>
+          </div>
+        </div>
+
+        <!-- 结果 -->
+        <div id="result" class="hidden">
+          <div id="processBar" class="flex flex-wrap gap-5 text-sm text-slate-600 mb-6"></div>
+          <div id="overview" class="grid grid-cols-3 gap-4 mb-6"></div>
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm border-collapse">
+                <thead><tr class="bg-slate-50 text-left text-slate-600"><th class="px-4 py-2 font-medium">条款</th><th class="px-4 py-2 font-medium">判定</th><th class="px-4 py-2 font-medium">等级</th><th class="px-4 py-2 font-medium">问题 / 修订建议</th></tr></thead>
+                <tbody id="tableBody"></tbody>
+              </table>
+            </div>
+            <p class="text-xs text-slate-400 mt-6">本报告仅供辅助参考，不构成法律意见。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI 对话 -->
+    <section id="page-chat" data-page="chat" class="hidden h-screen">
+      <div class="flex h-full">
+        <!-- 左栏：对话管理 -->
+        <aside class="w-72 shrink-0 bg-white border-r border-slate-200 flex flex-col">
+          <div class="p-5 border-b border-slate-100">
+            <div class="font-semibold text-slate-800 mb-1">💬 合同 AI 助手</div>
+            <div class="text-xs text-slate-400 mb-4">模型：DeepSeek-Chat</div>
+            <label class="block text-xs font-medium text-slate-500 mb-1.5">当前合同</label>
+            <select id="chatContract" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+              <option value="">加载中…</option>
+            </select>
+            <button id="chatNew" class="mt-3 w-full bg-brand-600 text-white py-2 rounded-lg text-sm hover:bg-brand-700">+ 新对话</button>
+          </div>
+          <div class="p-5 flex-1 overflow-auto">
+            <div class="text-xs font-semibold text-slate-500 mb-3">快捷问题</div>
+            <div id="chatQuick" class="space-y-2">
+              <button class="quick-q w-full text-left text-sm text-slate-600 px-3 py-2.5 rounded-lg border border-slate-200 hover:border-brand-400 hover:text-brand-600" data-q="这份合同的违约金是怎么约定的？">违约金是怎么约定的？</button>
+              <button class="quick-q w-full text-left text-sm text-slate-600 px-3 py-2.5 rounded-lg border border-slate-200 hover:border-brand-400 hover:text-brand-600" data-q="有没有责任上限？">有没有责任上限？</button>
+              <button class="quick-q w-full text-left text-sm text-slate-600 px-3 py-2.5 rounded-lg border border-slate-200 hover:border-brand-400 hover:text-brand-600" data-q="争议解决方式是什么？">争议解决方式是什么？</button>
+              <button class="quick-q w-full text-left text-sm text-slate-600 px-3 py-2.5 rounded-lg border border-slate-200 hover:border-brand-400 hover:text-brand-600" data-q="这份合同有哪些风险条款？">有哪些风险条款？</button>
+              <button class="quick-q w-full text-left text-sm text-slate-600 px-3 py-2.5 rounded-lg border border-slate-200 hover:border-brand-400 hover:text-brand-600" data-q="保密条款的期限是多久？">保密期限是多久？</button>
+            </div>
+            <div class="mt-6 text-xs text-slate-400 leading-relaxed">提示：助手只基于当前合同原文回答，找不到会直接说「没找到」。</div>
+          </div>
+        </aside>
+
+        <!-- 右栏：聊天区 -->
+        <div class="flex-1 flex flex-col min-w-0 bg-slate-50">
+          <div id="chatMessages" class="flex-1 overflow-y-auto p-6 space-y-4">
+            <div id="chatEmpty" class="h-full flex flex-col items-center justify-center text-center">
+              <div class="w-16 h-16 rounded-2xl bg-brand-600 text-white flex items-center justify-center text-3xl mb-4">⚖️</div>
+              <div class="text-xl font-bold text-slate-800">合同 AI 助手</div>
+              <p class="text-sm text-slate-500 mt-2 max-w-md">选择左侧的合同，然后问我任何关于它的问题。我会只基于合同原文回答，并标注引用的条款。</p>
+            </div>
+          </div>
+          <div class="border-t border-slate-200 bg-white p-4">
+            <div class="flex gap-2">
+              <input id="chatInput" type="text" placeholder="问关于这份合同的问题…（Enter 发送）" class="flex-1 border border-slate-300 rounded-lg px-4 py-2.5 text-sm" />
+              <button id="chatSend" class="bg-brand-600 text-white px-6 py-2.5 rounded-lg hover:bg-brand-700 text-sm font-medium">发送</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 合同对比 -->
+    <section id="page-compare" data-page="compare" class="hidden">
+      <div class="max-w-6xl mx-auto px-8 py-10">
+        <h1 class="text-2xl font-bold mb-2">⚖️ 合同对比</h1>
+        <p class="text-sm text-slate-500 mb-6">选择两份合同，逐条比对 13 类条款的差异</p>
+
+        <!-- 选择 -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+          <div class="grid md:grid-cols-3 gap-4 items-end">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">A 合同（原版）</label>
+              <select id="compareA" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"><option value="">加载中…</option></select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">B 合同（新版）</label>
+              <select id="compareB" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"><option value="">加载中…</option></select>
+            </div>
+            <button id="compareBtn" class="bg-brand-600 text-white px-5 py-2.5 rounded-lg hover:bg-brand-700 text-sm font-medium">开始对比</button>
+          </div>
+        </div>
+
+        <!-- 进度面板 -->
+        <div id="compareProgressPanel" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+          <div class="flex justify-between text-sm mb-2">
+            <span class="font-medium">对比进度</span>
+            <span id="comparePct" class="text-brand-600 font-semibold">0%</span>
+          </div>
+          <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div id="compareProgressBar" class="h-full bg-brand-600" style="width:0%;transition:width .3s ease"></div>
+          </div>
+          <div id="compareStageList" class="mt-4 grid grid-cols-4 gap-2 text-xs">
+            <div data-cstage="0" class="cstage px-2 py-1.5 rounded-lg bg-slate-50 text-slate-400 text-center">① 解析 A</div>
+            <div data-cstage="1" class="cstage px-2 py-1.5 rounded-lg bg-slate-50 text-slate-400 text-center">② 解析 B</div>
+            <div data-cstage="2" class="cstage px-2 py-1.5 rounded-lg bg-slate-50 text-slate-400 text-center">③ 逐条比对</div>
+            <div data-cstage="3" class="cstage px-2 py-1.5 rounded-lg bg-slate-50 text-slate-400 text-center">④ 生成差异</div>
+          </div>
+        </div>
+
+        <!-- 结果 -->
+        <div id="compareResult" class="hidden">
+          <div id="compareSummary" class="grid grid-cols-4 gap-4 mb-6"></div>
+          <div id="compareDist" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+            <div class="text-sm font-medium mb-3">差异分布</div>
+            <div id="compareDistBar" class="flex h-4 rounded-full overflow-hidden bg-slate-100"></div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="font-semibold">差异明细</h2>
+              <div class="flex gap-3 text-xs text-slate-500">
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-blue-200"></span>修改</span>
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-green-200"></span>新增</span>
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-red-200"></span>删除</span>
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-slate-200"></span>相同</span>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm border-collapse">
+                <thead><tr class="bg-slate-50 text-left text-slate-600"><th class="px-4 py-2 font-medium">条款</th><th class="px-4 py-2 font-medium">变化</th><th class="px-4 py-2 font-medium">A 合同</th><th class="px-4 py-2 font-medium">B 合同</th></tr></thead>
+                <tbody id="compareBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 合同模板 -->
+    <section id="page-templates" data-page="templates" class="hidden">
+      <div class="max-w-6xl mx-auto px-8 py-10">
+        <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+          <div>
+            <h1 class="text-2xl font-bold">合同模板库</h1>
+            <p class="text-sm text-slate-500 mt-1">标准合同模板管理，提供多种行业范本</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <input id="templateSearch" type="text" placeholder="搜索模板名称…" class="border border-slate-300 rounded-lg px-3 py-2 text-sm w-56" />
+            <button id="btnCustomTemplate" class="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-brand-700">+ 自定义模板</button>
+            <input id="templateFile" type="file" accept=".docx" class="hidden" />
+          </div>
+        </div>
+        <div id="templateCats" class="flex flex-wrap gap-2 mb-6"></div>
+        <div id="templateGrid" class="grid md:grid-cols-4 gap-4"></div>
+      </div>
+
+      <!-- 预览弹窗 -->
+      <div id="previewModal" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-auto p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 id="previewTitle" class="text-lg font-bold"></h3>
+            <button id="previewClose" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">×</button>
+          </div>
+          <div id="previewBody" class="text-sm text-slate-600 space-y-1.5"></div>
+          <div class="mt-6 flex gap-3">
+            <a id="previewDownload" class="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-brand-700" href="#">下载模板</a>
+            <button id="previewClose2" class="border border-slate-300 px-4 py-2 rounded-lg text-sm text-slate-600">关闭</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 评估数据 -->
+    <section id="page-eval" data-page="eval" class="hidden">
+      <div class="max-w-5xl mx-auto px-8 py-10">
+        <h1 class="text-2xl font-bold mb-2">📊 评估数据</h1>
+        <p class="text-sm text-slate-500 mb-6">数据来自 results/eval_v3.json —— 31 份合同 / 403 条评估集</p>
+        <div id="evalMetrics" class="grid md:grid-cols-4 gap-5"></div>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 mt-8 overflow-hidden">
+          <div class="px-5 py-3 border-b border-slate-100 font-semibold text-sm">逐份合同结果</div>
+          <div id="evalTable" class="p-2"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 关于 -->
+    <section id="page-about" data-page="about" class="hidden">
+      <div class="max-w-3xl mx-auto px-8 py-10">
+        <h1 class="text-2xl font-bold mb-6">📖 关于这个项目</h1>
+        <div class="space-y-4 text-slate-700 leading-relaxed">
+          <p>这是一个<strong>合同智能审查 Agent</strong>：解析合同 → LLM 抽取 13 类条款 → 规则 + 语义双层风险判定 → 人工确认 → 生成审查报告。</p>
+          <p>技术栈：Python / FastAPI / LangGraph / DeepSeek API / 原生 HTML·CSS·JS + Tailwind。</p>
+          <p>评估集 31 份合同 / 403 条，抽取准确率 95.53%，单份成本约 1 分钱。</p>
+          <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">
+            ⚠️ 免责声明：本工具仅作技术演示与辅助参考，不构成法律意见，不替代律师或专业人士的审查。
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- 登录 / 注册（小卡片 + 背景包裹） -->
+<div id="authOverlay" class="fixed inset-0 z-[100] hidden bg-gradient-to-br from-white via-slate-50 to-blue-50 auth-grid">
+  <!-- 背景装饰 -->
+  <div class="absolute -top-24 -left-20 w-80 h-80 rounded-full bg-blue-300/30 blur-3xl auth-blob" style="pointer-events:none"></div>
+  <div class="absolute -bottom-20 -right-10 w-96 h-96 rounded-full bg-purple-300/25 blur-3xl auth-blob auth-blob-2" style="pointer-events:none"></div>
+  <div class="absolute top-1/4 right-1/3 w-56 h-56 rounded-full bg-pink-300/20 blur-3xl auth-blob auth-blob-3" style="pointer-events:none"></div>
+  <span class="auth-dot" style="top:18%;left:12%"></span>
+  <span class="auth-dot" style="top:60%;left:8%;animation-delay:-2s"></span>
+  <span class="auth-dot" style="top:32%;right:16%;animation-delay:-4s"></span>
+  <span class="auth-dot" style="bottom:22%;right:10%;animation-delay:-6s"></span>
+
+  <!-- 居中的登录卡片（小区域，被背景包裹） -->
+  <div class="relative h-full flex items-center justify-center px-6">
+    <div class="w-full max-w-md bg-white/80 backdrop-blur-xl rounded-3xl border border-white/70 shadow-2xl shadow-blue-900/10 p-8 auth-fade">
+      <div class="flex items-center gap-3 mb-8">
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-brand-500 to-indigo-600 text-white flex items-center justify-center text-xl shadow-lg shadow-blue-500/25">⚖️</div>
+        <div>
+          <div class="font-bold text-slate-800">合同智能审查</div>
+          <div class="text-[10px] text-slate-400 tracking-widest">CONTRACT REVIEW AGENT</div>
+        </div>
+      </div>
+
+      <h2 class="text-2xl font-bold text-slate-800 mb-1">欢迎回来</h2>
+      <p class="text-sm text-slate-400 mb-6">登录后开始审查合同</p>
+
+      <div class="flex mb-5 border-b border-slate-200">
+        <button data-auth-tab="login" class="authTab pb-3 px-1 mr-6 text-sm font-medium border-b-2 border-brand-600 text-brand-600">登录</button>
+        <button data-auth-tab="register" class="authTab pb-3 px-1 text-sm font-medium border-b-2 border-transparent text-slate-400">注册</button>
+      </div>
+
+      <label class="block text-xs font-medium text-slate-500 mb-1.5">用户名</label>
+      <input id="authUser" placeholder="请输入用户名" class="auth-input w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm mb-4 transition-colors" />
+      <label class="block text-xs font-medium text-slate-500 mb-1.5">密码</label>
+      <input id="authPass" type="password" placeholder="至少 6 位" class="auth-input w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm mb-3 transition-colors" />
+      <div id="authError" class="text-red-500 text-xs mb-3 hidden"></div>
+      <button id="authSubmit" class="btn-shimmer w-full bg-brand-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors">登录</button>
+
+      <div class="mt-6 pt-5 border-t border-slate-100 grid grid-cols-3 gap-2 text-center">
+        <div><div class="text-lg font-bold text-slate-800"><span data-count="31">0</span></div><div class="text-[10px] text-slate-400">评估合同</div></div>
+        <div><div class="text-lg font-bold text-slate-800"><span data-count="95.5" data-suffix="%">0</span></div><div class="text-[10px] text-slate-400">抽取准确率</div></div>
+        <div><div class="text-lg font-bold text-slate-800"><span data-count="13">0</span></div><div class="text-[10px] text-slate-400">类条款</div></div>
+      </div>
+      <p class="text-[11px] text-slate-400 mt-4 text-center">默认管理员：admin / admin123</p>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

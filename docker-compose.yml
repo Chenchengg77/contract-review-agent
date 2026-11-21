@@ -1,0 +1,8 @@
+services:
+  review:
+    build: .
+    env_file:
+      - .env            # 需要你本地有 .env（含 DEEPSEEK_API_KEY）
+    volumes:
+      - ./data:/app/data
+      - ./results:/app/results

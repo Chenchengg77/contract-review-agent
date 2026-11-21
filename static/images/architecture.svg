@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 660" font-family="system-ui, sans-serif">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2563eb"/>
+      <stop offset="1" stop-color="#4338ca"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 节点 -->
+  <g font-size="18" font-weight="700" fill="#fff" text-anchor="middle">
+    <rect x="60" y="16"  width="240" height="56" rx="12" fill="url(#g)"/>
+    <text x="180" y="50">合同文件 (.docx)</text>
+
+    <rect x="60" y="108" width="240" height="56" rx="12" fill="url(#g)"/>
+    <text x="180" y="136">① 解析</text>
+    <text x="180" y="154" font-size="12" font-weight="400" fill="#dbeafe">条款号 + 标题</text>
+
+    <rect x="60" y="200" width="240" height="56" rx="12" fill="url(#g)"/>
+    <text x="180" y="228">② 抽取</text>
+    <text x="180" y="246" font-size="12" font-weight="400" fill="#dbeafe">13 类条款 + 原文校验</text>
+
+    <rect x="60" y="292" width="240" height="56" rx="12" fill="url(#g)"/>
+    <text x="180" y="320">③ 风险判定</text>
+    <text x="180" y="338" font-size="12" font-weight="400" fill="#dbeafe">合规 / 偏离 / 缺失 / 冲突</text>
+
+    <rect x="60" y="384" width="240" height="56" rx="12" fill="#f59e0b"/>
+    <text x="180" y="412">④ 人工确认</text>
+    <text x="180" y="430" font-size="12" font-weight="400" fill="#fef3c7">高风险 interrupt</text>
+
+    <rect x="60" y="476" width="240" height="56" rx="12" fill="url(#g)"/>
+    <text x="180" y="504">⑤ 审查报告</text>
+    <text x="180" y="522" font-size="12" font-weight="400" fill="#dbeafe">风险清单 + 原文定位</text>
+  </g>
+
+  <!-- 箭头 -->
+  <g stroke="#94a3b8" stroke-width="3" fill="#94a3b8">
+    <line x1="180" y1="72" x2="180" y2="100"/>
+    <polygon points="180,106 174,96 186,96"/>
+    <line x1="180" y1="164" x2="180" y2="192"/>
+    <polygon points="180,198 174,188 186,188"/>
+    <line x1="180" y1="256" x2="180" y2="284"/>
+    <polygon points="180,290 174,280 186,280"/>
+    <line x1="180" y1="348" x2="180" y2="376"/>
+    <polygon points="180,382 174,372 186,372"/>
+    <line x1="180" y1="440" x2="180" y2="468"/>
+    <polygon points="180,474 174,464 186,464"/>
+  </g>
+
+  <!-- 成本提示 -->
+  <text x="180" y="590" text-anchor="middle" font-size="14" fill="#64748b">单份约 2 秒 · 成本约 1 分钱</text>
+</svg>

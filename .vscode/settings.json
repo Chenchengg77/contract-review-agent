@@ -1,0 +1,9 @@
+{
+  "editor.formatOnSave": true,
+  "editor.rulers": [88],
+  "files.encoding": "utf8",
+  "files.eol": "\n",
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter"
+  }
+}
