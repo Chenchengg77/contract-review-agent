@@ -13,13 +13,14 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 import config
 from src.parser import parse, clause_headings, parse_blocks
 from src import extract as EX
 from src import qa
+from src import law_qa
 from src import revision
 from src import auth
 from src.assess import assess, _find_clause_text
@@ -96,6 +97,29 @@ def my_reviews(user: dict = Depends(get_current_user)) -> dict:
 @app.get("/api/admin/users")
 def admin_users(user: dict = Depends(require_admin)) -> dict:
     return {"users": auth.list_users()}
+
+
+@app.delete("/api/admin/users/{user_id}")
+def admin_delete_user(user_id: int, user: dict = Depends(require_admin)) -> dict:
+    """删除用户（级联删除其会话与审查记录）。"""
+    if user_id == user["id"]:
+        raise HTTPException(400, "不能删除自己")
+    users = auth.list_users()
+    target = next((u for u in users if u["id"] == user_id), None)
+    if not target:
+        raise HTTPException(404, "用户不存在")
+    if target["role"] == "admin" and sum(1 for u in users if u["role"] == "admin") <= 1:
+        raise HTTPException(400, "不能删除最后一个管理员")
+    auth.delete_user(user_id)
+    return {"message": "已删除"}
+
+
+@app.delete("/api/reviews/{review_id}")
+def admin_delete_review(review_id: int, user: dict = Depends(require_admin)) -> dict:
+    """删除一条审查记录（管理员）。"""
+    if not auth.delete_review(review_id):
+        raise HTTPException(404, "记录不存在")
+    return {"message": "已删除"}
 
 # 惰性单例
 _client = None
@@ -397,6 +421,48 @@ async def chat(payload: dict, user: dict = Depends(get_current_user)) -> dict:
         raise HTTPException(404, "合同不存在")
 
     return qa.answer_question(path, question, _get_client(), history)
+
+
+@app.post("/api/law_chat")
+async def law_chat(payload: dict, user: dict = Depends(get_current_user)) -> dict:
+    """基于法规库的通用法律问答（RAG），返回带法条引用的回答。"""
+    question = (payload.get("question") or "").strip()
+    if not question:
+        raise HTTPException(400, "问题不能为空")
+    return law_qa.answer_law_question(question, _get_client(), payload.get("history") or [])
+
+
+_SSE_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
+
+
+@app.post("/api/chat_stream")
+async def chat_stream(payload: dict, user: dict = Depends(get_current_user)):
+    """合同问答（流式 SSE）。"""
+    name = payload.get("name", "")
+    question = (payload.get("question") or "").strip()
+    if not question:
+        raise HTTPException(400, "问题不能为空")
+    path = (config.RAW_DIR / name).resolve()
+    if not str(path).startswith(str(config.RAW_DIR.resolve())) or not path.exists():
+        raise HTTPException(404, "合同不存在")
+    return StreamingResponse(
+        qa.stream_answer_question(path, question, _get_client(), payload.get("history") or []),
+        media_type="text/event-stream",
+        headers=_SSE_HEADERS,
+    )
+
+
+@app.post("/api/law_chat_stream")
+async def law_chat_stream(payload: dict, user: dict = Depends(get_current_user)):
+    """法律问答（流式 SSE）。"""
+    question = (payload.get("question") or "").strip()
+    if not question:
+        raise HTTPException(400, "问题不能为空")
+    return StreamingResponse(
+        law_qa.stream_answer_law_question(question, _get_client(), payload.get("history") or []),
+        media_type="text/event-stream",
+        headers=_SSE_HEADERS,
+    )
 
 
 # 前端静态文件（放最后，避免吞掉 /api 路由）

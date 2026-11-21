@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import config
@@ -66,3 +67,44 @@ def answer_question(
     }
     citations = sorted({h["meta"].get("clause_no") or "正文" for h in hits})
     return {"answer": answer, "citations": citations, "usage": usage}
+
+
+def stream_answer_question(
+    path: Path,
+    question: str,
+    client,
+    history: list[dict] | None = None,
+):
+    """流式版本：先发 citations 事件，再逐 token 发 SSE，最后 done。"""
+    paragraphs = parse(path)
+    idx = BM25Index()
+    for p in paragraphs:
+        idx.add(p["text"], p)
+    hits = idx.search(question, k=6)
+
+    context = _build_context(hits)
+    messages = [{"role": "system", "content": _SYSTEM}]
+    for h in (history or [])[-4:]:
+        role = h.get("role", "user")
+        content = h.get("content", "")
+        if role in ("user", "assistant") and content:
+            messages.append({"role": role, "content": content})
+    messages.append({
+        "role": "user",
+        "content": f"【合同原文片段】\n{context}\n\n【用户问题】\n{question}",
+    })
+
+    citations = sorted({h["meta"].get("clause_no") or "正文" for h in hits})
+    yield f"event: citations\ndata: {json.dumps({'citations': citations}, ensure_ascii=False)}\n\n"
+
+    stream = client.chat.completions.create(
+        model=config.MODEL,
+        messages=messages,
+        temperature=0,
+        stream=True,
+    )
+    for chunk in stream:
+        delta = chunk.choices[0].delta.content or ""
+        if delta:
+            yield f"event: token\ndata: {json.dumps({'text': delta}, ensure_ascii=False)}\n\n"
+    yield "event: done\ndata: {}\n\n"

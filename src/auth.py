@@ -170,3 +170,18 @@ def list_users() -> list[dict]:
             "SELECT id, username, role, created_at FROM users ORDER BY id"
         ).fetchall()
     return [dict(r) for r in rows]
+
+
+def delete_user(user_id: int) -> bool:
+    """删除用户，并级联删除其会话和审查记录。"""
+    with _db() as c:
+        c.execute("DELETE FROM sessions WHERE user_id=?", (user_id,))
+        c.execute("DELETE FROM reviews WHERE user_id=?", (user_id,))
+        cur = c.execute("DELETE FROM users WHERE id=?", (user_id,))
+        return cur.rowcount > 0
+
+
+def delete_review(review_id: int) -> bool:
+    with _db() as c:
+        cur = c.execute("DELETE FROM reviews WHERE id=?", (review_id,))
+        return cur.rowcount > 0
