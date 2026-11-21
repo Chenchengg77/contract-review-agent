@@ -16,7 +16,7 @@ function authHeaders(extra = {}) {
 }
 
 // ---- 路由 ----
-const PAGES = ['home', 'review', 'chat', 'compare', 'templates', 'eval', 'about'];
+const PAGES = ['home', 'review', 'chat', 'compare', 'templates', 'eval', 'admin', 'about'];
 
 function showPage(name) {
   document.querySelectorAll('[data-page]').forEach((el) => {
@@ -28,6 +28,7 @@ function showPage(name) {
   });
   // 切页后滚动到顶部
   document.querySelector('main').scrollTop = 0;
+  if (name === 'admin') loadAdmin();
 }
 
 function route() {
@@ -636,7 +637,7 @@ async function submitAuth() {
       return;
     }
     setToken(data.token);
-    document.getElementById('navUser').textContent = '👤 ' + data.user.username;
+    applyUser(data.user);
     showAuthOverlay(false);
     bootApp();
   } catch (e) {
@@ -668,10 +669,62 @@ async function checkAuth() {
       return;
     }
     const user = await res.json();
-    document.getElementById('navUser').textContent = '👤 ' + user.username;
+    applyUser(user);
     bootApp();
   } catch (e) {
     showAuthOverlay(true);
+  }
+}
+
+function applyUser(user) {
+  document.getElementById('navUser').textContent = '👤 ' + user.username;
+  document.getElementById('navAdmin').classList.toggle('hidden', user.role !== 'admin');
+}
+
+function fmtTime(ts) {
+  if (!ts) return '-';
+  return new Date(ts * 1000).toLocaleString('zh-CN');
+}
+
+async function loadAdmin() {
+  try {
+    const [uRes, rRes] = await Promise.all([
+      fetch('/api/admin/users', { headers: authHeaders() }),
+      fetch('/api/reviews', { headers: authHeaders() }),
+    ]);
+    const users = (await uRes.json()).users || [];
+    const reviews = (await rRes.json()).reviews || [];
+
+    document.getElementById('adminUserCount').textContent = users.length + ' 位用户';
+    document.getElementById('adminUsersBody').innerHTML = users
+      .map(
+        (u) => `
+      <tr class="border-b border-slate-100">
+        <td class="px-4 py-2.5 text-slate-500">${u.id}</td>
+        <td class="px-4 py-2.5 font-medium">${u.username}</td>
+        <td class="px-4 py-2.5">${badge(u.role === 'admin' ? '管理员' : '普通用户', u.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600')}</td>
+        <td class="px-4 py-2.5 text-slate-500">${fmtTime(u.created_at)}</td>
+      </tr>`
+      )
+      .join('');
+
+    document.getElementById('adminReviewCount').textContent = reviews.length + ' 条记录';
+    document.getElementById('adminReviewsBody').innerHTML =
+      reviews
+        .map(
+          (r) => `
+      <tr class="border-b border-slate-100">
+        <td class="px-4 py-2.5 font-medium">${r.username}</td>
+        <td class="px-4 py-2.5 text-slate-600">${r.filename}</td>
+        <td class="px-4 py-2.5"><span class="text-red-600">${r.high}</span> / <span class="text-amber-600">${r.mid}</span> / <span class="text-green-600">${r.low}</span></td>
+        <td class="px-4 py-2.5 text-slate-500">${fmtTime(r.created_at)}</td>
+      </tr>`
+        )
+        .join('') ||
+      '<tr><td colspan="4" class="px-4 py-6 text-center text-slate-400">暂无审查记录</td></tr>';
+  } catch (e) {
+    document.getElementById('adminUsersBody').innerHTML =
+      '<tr><td colspan="4" class="px-4 py-6 text-center text-slate-400">加载失败</td></tr>';
   }
 }
 
