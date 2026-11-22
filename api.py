@@ -465,5 +465,11 @@ async def law_chat_stream(payload: dict, user: dict = Depends(get_current_user))
     )
 
 
-# 前端静态文件（放最后，避免吞掉 /api 路由）
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+# 前端静态文件：优先 Vue 构建产物（frontend/dist），回退到旧版 static/
+_DIST = config.ROOT / "frontend" / "dist"
+_STATIC = config.ROOT / "static"
+app.mount(
+    "/",
+    StaticFiles(directory=str(_DIST if _DIST.exists() else _STATIC), html=True),
+    name="static",
+)

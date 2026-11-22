@@ -16,6 +16,11 @@ venv/
 data/app.db
 data/app.db-journal
 
+# ---------- 前端（Vue）----------
+# 依赖与构建产物不提交；源码提交，部署时用 npm run build 生成 dist
+frontend/node_modules/
+frontend/dist/
+
 # ---------- 缓存 ----------
 .cache/
 results/*.tmp

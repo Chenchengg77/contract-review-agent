@@ -1,0 +1,132 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  color: #0f172a;
+  background: #f1f5f9;
+}
+
+/* ============ 设计系统（全局统一） ============ */
+.page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 28px 32px 48px;
+}
+.page-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.page-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.page-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 4px;
+  letter-spacing: 0.3px;
+}
+.page-sub {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* Element Plus 卡片统一 */
+.el-card {
+  border-radius: 16px !important;
+  border-color: #e8edf5 !important;
+  box-shadow: none !important;
+}
+.el-card__body {
+  padding: 22px !important;
+}
+.el-card + .el-card {
+  margin-top: 16px;
+}
+
+/* 主按钮统一渐变 */
+.el-button--primary {
+  background: linear-gradient(135deg, #2563eb, #4f46e5) !important;
+  border: none !important;
+  box-shadow: 0 8px 18px -10px rgba(37, 99, 235, 0.7);
+}
+.el-button--primary:hover {
+  opacity: 0.92;
+}
+
+/* 表格统一 */
+.el-table th.el-table__cell {
+  background: #f8fafc !important;
+  color: #475569 !important;
+  font-weight: 500 !important;
+}
+.el-table {
+  --el-table-border-color: #f1f5f9;
+  font-size: 13.5px;
+}
+
+/* 自定义表格（审查/对比）斑马纹 + 悬停 */
+.tbl tbody tr:nth-child(even) {
+  background: #fbfcfe;
+}
+.tbl tbody tr:hover {
+  background: #f3f7ff;
+}
+
+/* 卡片 hover 微浮 */
+.card,
+.el-card {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+/* 空状态 */
+.empty {
+  color: #94a3b8;
+  padding: 48px;
+  text-align: center;
+  font-size: 13px;
+}
+
+/* 聊天回答的 Markdown 样式 */
+.chat-text h1,
+.chat-text h2,
+.chat-text h3,
+.chat-text h4 {
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0.7em 0 0.35em;
+  line-height: 1.4;
+}
+.chat-text h1 { font-size: 1.08em; }
+.chat-text h2 { font-size: 1.02em; }
+.chat-text h3 { font-size: 0.96em; }
+.chat-text p { margin: 0.3em 0; }
+.chat-text ul,
+.chat-text ol { margin: 0.3em 0 0.3em 1.15em; padding: 0; }
+.chat-text li { margin: 0.12em 0; }
+.chat-text strong { font-weight: 700; color: #0f172a; }
+.chat-text table { border-collapse: collapse; margin: 0.5em 0; font-size: 0.9em; }
+.chat-text th,
+.chat-text td { border: 1px solid #e2e8f0; padding: 4px 8px; text-align: left; }
+.chat-text th { background: #f8fafc; font-weight: 600; }
+.chat-text code { background: #f1f5f9; padding: 1px 4px; border-radius: 4px; font-size: 0.9em; }
