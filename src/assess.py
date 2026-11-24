@@ -12,9 +12,50 @@
 from __future__ import annotations
 
 import json
+import re
 
 import config
 from src.judge import judge_clause
+
+# 主条款：第X条 / 第X章 / 一、；小节（1.1 / 1. / （一））不算边界
+_MAIN_CLAUSE_RE = re.compile(r"^(第[一二三四五六七八九十百零0-9]+[条章]|[一二三四五六七八九十]+、)")
+
+_CN_NUM = {"一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10}
+
+
+def _cn_to_int(s: str) -> int | None:
+    """中文数字转 int（支持 1~99）。"""
+    if not s:
+        return None
+    if s.isdigit():
+        return int(s)
+    if s == "十":
+        return 10
+    if "十" in s:
+        a, b = s.split("十", 1)
+        tens = _CN_NUM.get(a, 1) if a else 1
+        ones = _CN_NUM.get(b, 0) if b else 0
+        return tens * 10 + ones
+    return _CN_NUM.get(s)
+
+
+def _clause_key(clause_no: str | None) -> str:
+    """把「第十条」「10」「10.」「一、」统一成数字字符串，便于跨格式匹配。"""
+    s = (clause_no or "").strip()
+    if not s:
+        return ""
+    m = re.match(r"^第([一二三四五六七八九十百零〇0-9]+)[条章]", s)
+    if m:
+        v = _cn_to_int(m.group(1))
+        return str(v) if v is not None else s
+    m2 = re.match(r"^([一二三四五六七八九十]+)、", s)
+    if m2:
+        v = _cn_to_int(m2.group(1))
+        return str(v) if v is not None else s
+    m3 = re.match(r"^(\d+)", s)
+    if m3:
+        return str(int(m3.group(1)))
+    return s
 
 # 缺失时判定为「高」风险的条款类型（与 playbook 的 severity_rule 一致）
 _MISSING_SEVERITY = {
@@ -28,12 +69,54 @@ def load_playbook() -> list[dict]:
     return data["clause_types"]
 
 
+def _collect_body(paragraphs: list[dict], i: int) -> str:
+    """从第 i 段开始收集正文，直到下一个「主条款」或「数字编号条款」为止。"""
+    parts = [paragraphs[i]["text"]]
+    for q in paragraphs[i + 1:]:
+        if _MAIN_CLAUSE_RE.match(q.get("clause_no") or ""):
+            break
+        t = (q.get("text") or "").strip()
+        # 「10. xxx」「3、xxx」这类编号段落也是新条款的开始
+        if t and re.match(r"^\d+[\.、]", t):
+            break
+        if t:
+            parts.append(t)
+    return "\n".join(parts)
+
+
 def _find_clause_text(paragraphs: list[dict], clause_no: str, evidence: str) -> str:
-    """从段落里找该条款的完整正文（优先按条款号，退而按 evidence 前缀）。"""
+    """从段落里找该条款的完整正文：条款号所在段 + 其后的正文段（直到下一个主条款）。
+
+    两段式匹配（避免「第二条」误匹配附件里的「2.《机动车行驶证》」）：
+    1. 精确：段落文本以该条款号开头（如「第二条」「10.」）；
+    2. 回退：条款号归一化成数字后一致，且段落以数字编号开头。
+    """
+    best = ""
     if clause_no:
-        parts = [p["text"] for p in paragraphs if p.get("clause_no") == clause_no]
-        if parts:
-            return "\n".join(parts)
+        # ① 精确前缀匹配
+        for i, p in enumerate(paragraphs):
+            t = (p.get("text") or "").strip()
+            if t and t.startswith(clause_no):
+                body = _collect_body(paragraphs, i)
+                if len(body) > len(best):
+                    best = body
+        if best:
+            return best
+
+        # ② 数字归一化回退（只认「10.」「10、」这类编号开头）
+        key = _clause_key(clause_no)
+        for i, p in enumerate(paragraphs):
+            t = (p.get("text") or "").strip()
+            if not t or not re.match(r"^\d+[\.、]", t):
+                continue
+            if _clause_key(t[:4]) != key:
+                continue
+            body = _collect_body(paragraphs, i)
+            if len(body) > len(best):
+                best = body
+        if best:
+            return best
+
     if evidence:
         key = evidence[:8]
         for p in paragraphs:
@@ -47,6 +130,7 @@ def assess(
     clause_types: list[dict],
     paragraphs: list[dict] | None = None,
     client=None,
+    perspective: str = "",
 ) -> list[dict]:
     """对抽取结果逐条判定，返回与 gold.json 同构的 judgments。
 
@@ -76,7 +160,7 @@ def assess(
         if use_llm:
             clause_text = _find_clause_text(paragraphs, c.get("clause_no"), c.get("evidence"))
             try:
-                r = judge_clause(name, clause_text, entry, client)
+                r = judge_clause(name, clause_text, entry, client, perspective)
                 verdict = r.get("verdict", "偏离")
                 results.append({
                     "clause": name,

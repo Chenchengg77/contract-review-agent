@@ -10,13 +10,14 @@ from __future__ import annotations
 import json
 
 import config
+from src.guard import REFUSAL, check_scope
 from src.retrieve import BM25Index
 
 _INDEX = None
 _ARTICLES = None
 
 _SYSTEM = (
-    "你是法律知识助手。请**只根据下面提供的法条**回答用户问题。\n\n"
+    "你是「法务小助手」，一位有 10 年经验的资深法务，说话专业但温和。\n\n"
     "请严格按以下 Markdown 结构输出（不要偏离）：\n"
     "## 结论\n"
     "（用一句话给出明确结论）\n\n"
@@ -25,8 +26,12 @@ _SYSTEM = (
     "2. **要点二**：……\n\n"
     "## 注意事项\n"
     "- （适用条件、例外、风险提示等）\n\n"
-    "规则：\n"
-    "1. 如果法条里没有相关信息，直接回答「法规库中没有找到相关条款」，不要编造；\n"
+    "语气规则：\n"
+    "- 用「我」自称、称呼「你」；\n"
+    "- 避免「综上所述」「以下是」这类机器人腔；\n"
+    "- 不确定时直接说「这条建议找律师确认」。\n\n"
+    "事实规则：\n"
+    "1. 只根据下面提供的法条回答，没有就说「法规库中没有找到相关条款」，不要编造；\n"
     "2. 引用法条时写明法律名称和条号（如《民法典》第五百七十七条）；\n"
     "3. 不要编造法条之外的规定。"
 )
@@ -49,6 +54,18 @@ def answer_law_question(question: str, client, history: list[dict] | None = None
     """检索法规库 → 拼 prompt → LLM 回答（带法条引用、能拒答）。"""
     idx, _ = _load()
     hits = idx.search(question, k=6)
+
+    # 前置拦截：法规库阈值更低（语料小），灰区交给意图分类
+    ok, guard_why = check_scope(question, hits, client, low=3.0, high=6.0)
+    if not ok:
+        return {
+            "answer": REFUSAL,
+            "citations": [],
+            "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+            "refused": True,
+            "guard": guard_why,
+        }
+
     # 过滤低分噪音：只保留分数接近最高分的前几条
     if hits:
         top = hits[0]["score"] or 1.0
@@ -81,13 +98,28 @@ def answer_law_question(question: str, client, history: list[dict] | None = None
         "total_tokens": resp.usage.total_tokens,
     }
     citations = [f"{h['meta']['law']} {h['meta']['article']}" for h in hits[:3]]
-    return {"answer": resp.choices[0].message.content, "citations": citations, "usage": usage}
+    return {
+        "answer": resp.choices[0].message.content,
+        "citations": citations,
+        "usage": usage,
+        "refused": False,
+        "guard": guard_why,
+    }
 
 
 def stream_answer_law_question(question: str, client, history: list[dict] | None = None):
     """流式版本：先发 citations 事件，再逐 token 发 SSE，最后 done。"""
     idx, _ = _load()
     hits = idx.search(question, k=6)
+
+    # 前置拦截（流式版）
+    ok, _guard_why = check_scope(question, hits, client, low=3.0, high=6.0)
+    if not ok:
+        yield f"event: citations\ndata: {json.dumps({'citations': []}, ensure_ascii=False)}\n\n"
+        yield f"event: token\ndata: {json.dumps({'text': REFUSAL}, ensure_ascii=False)}\n\n"
+        yield "event: done\ndata: {}\n\n"
+        return
+
     if hits:
         top = hits[0]["score"] or 1.0
         hits = [h for h in hits if h["score"] >= top * 0.6][:4]

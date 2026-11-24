@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useReviewStore } from '../stores/review'
 
@@ -13,6 +14,7 @@ interface Judgment {
 }
 
 const store = useReviewStore()
+const router = useRouter()
 const file = ref<File | null>(null)
 
 const clauseTypes = [
@@ -27,7 +29,7 @@ const clauseTypes = [
   '交付条款',
   '发票条款',
   '竞业限制',
-  '通知送达',
+  '数据合规',
   '不可抗力',
 ]
 
@@ -61,6 +63,35 @@ function start() {
   store.start(file.value)
 }
 
+function fmtTime(ts: number) {
+  if (!ts) return ''
+  const d = new Date(ts * 1000)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+// 缺失的条款（用于提示"本范本缺少 N 类条款"）
+const missingClauses = computed<string[]>(() =>
+  (store.result?.judgments || [])
+    .filter((j: Judgment) => j.verdict === '缺失')
+    .map((j: Judgment) => j.clause)
+)
+
+// 风险最高的一条（用于主动追问）
+const topRisk = computed<Judgment | null>(() => {
+  const js: Judgment[] = store.result?.judgments || []
+  return js.find((j) => j.severity === '高') || null
+})
+
+const proactiveText = computed(() => {
+  const ov = store.result?.overview
+  if (!ov) return ''
+  const parts = [`审完了：${ov.high} 条高风险、${ov.mid} 条中风险。`]
+  if (topRisk.value) parts.push(`其中「${topRisk.value.clause}」风险最高。`)
+  parts.push('想让我展开讲哪条？直接问我就行。')
+  return parts.join('')
+})
+
 const stageLabels = ['① 解析', '② 抽取', '③ 判定', '④ 修订']
 
 const verdictColor: Record<string, string> = {
@@ -89,6 +120,19 @@ function badgeStyle(color: string) {
     <div class="layout">
       <!-- 主列 -->
       <div class="main-col">
+        <!-- 上次审查提示 -->
+        <div v-if="store.lastReview && store.contracts.includes(store.lastReview.filename)" class="last-hint">
+          <span class="lh-text">
+            欢迎回来 —— 上次你审了「{{ store.lastReview.filename }}」（{{ fmtTime(store.lastReview.created_at) }}）
+          </span>
+          <button
+            class="lh-btn"
+            @click="store.selected = store.lastReview!.filename; file = null"
+          >
+            继续看这一份
+          </button>
+        </div>
+
         <!-- 选择合同 -->
         <el-card shadow="never" class="card">
           <div class="upload-row">
@@ -124,6 +168,14 @@ function badgeStyle(color: string) {
               <label class="lbl">关注点（可选）</label>
               <el-input v-model="store.focus" placeholder="例如：重点关注付款、违约责任与争议解决" />
             </div>
+            <div class="cfg-field stance">
+              <label class="lbl">审查立场</label>
+              <el-select v-model="store.perspective" placeholder="中立" clearable style="width: 100%">
+                <el-option label="中立" value="" />
+                <el-option label="甲方" value="甲方" />
+                <el-option label="乙方" value="乙方" />
+              </el-select>
+            </div>
             <el-button type="primary" size="large" :loading="store.loading" @click="start">开始审查</el-button>
           </div>
           <div class="tip">提示：审查在后台进行，切到其他页面再回来也不会中断。</div>
@@ -158,6 +210,15 @@ function badgeStyle(color: string) {
             </div>
           </div>
 
+          <div v-if="missingClauses.length" class="missing-hint">
+            <span class="mh-icon">⚠️</span>
+            <div class="mh-body">
+              <div class="mh-title">本范本缺少 {{ missingClauses.length }} 类条款，建议补充</div>
+              <div class="mh-list">{{ missingClauses.join('、') }}</div>
+              <div class="mh-tip">空白范本通常不覆盖这些条款，签约前可参考下方修订建议补充。</div>
+            </div>
+          </div>
+
           <el-card shadow="never" class="card">
             <div class="table-wrap">
               <table class="tbl">
@@ -187,6 +248,14 @@ function badgeStyle(color: string) {
               </table>
             </div>
           </el-card>
+
+          <div class="assistant-note">
+            <div class="an-avatar">⚖️</div>
+            <div class="an-body">
+              <div class="an-text">{{ proactiveText }}</div>
+              <button class="an-btn" @click="router.push('/chat')">去 AI 对话问细节 →</button>
+            </div>
+          </div>
         </template>
 
         <!-- 空状态 -->
@@ -215,6 +284,7 @@ function badgeStyle(color: string) {
             <li>每条给出原文定位与修订建议</li>
             <li>风险等级分高 / 中 / 低</li>
             <li>审查在后台进行，切换页面不中断</li>
+            <li>适用于<b>商务合同</b>（买卖/租赁/承揽/服务/建设）</li>
           </ul>
         </el-card>
       </aside>
@@ -303,9 +373,10 @@ function badgeStyle(color: string) {
 
 /* 配置 */
 .cfg-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 180px 140px;
   gap: 16px;
-  align-items: flex-end;
+  align-items: end;
 }
 .cfg-field {
   flex: 1;
@@ -320,6 +391,33 @@ function badgeStyle(color: string) {
   margin-top: 10px;
   font-size: 12px;
   color: #94a3b8;
+}
+.pref-chip {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #1d4ed8;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  padding: 5px 12px;
+}
+.pref-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+}
+.pref-link {
+  background: none;
+  border: none;
+  color: #1d4ed8;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
 }
 
 /* 进度 */
@@ -419,6 +517,110 @@ function badgeStyle(color: string) {
   border-radius: 8px;
   padding: 8px 10px;
   line-height: 1.6;
+}
+
+/* 上次审查提示 */
+.last-hint {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  color: #1e40af;
+}
+.lh-text {
+  flex: 1;
+  min-width: 200px;
+}
+.lh-btn {
+  background: #fff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  font-size: 12px;
+  border-radius: 8px;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+.lh-btn:hover {
+  background: #dbeafe;
+}
+
+/* 主动追问 */
+.assistant-note {
+  display: flex;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid #e8edf5;
+  border-radius: 16px;
+  padding: 16px 18px;
+}
+.an-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+.an-body {
+  flex: 1;
+}
+.an-text {
+  font-size: 13.5px;
+  color: #334155;
+  line-height: 1.7;
+}
+.an-btn {
+  margin-top: 10px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  font-size: 12.5px;
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.an-btn:hover {
+  background: #dbeafe;
+}
+
+/* 缺失条款提示 */
+.missing-hint {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+.mh-icon {
+  font-size: 18px;
+  line-height: 1.4;
+}
+.mh-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #92400e;
+  margin-bottom: 4px;
+}
+.mh-list {
+  font-size: 12.5px;
+  color: #b45309;
+  line-height: 1.7;
+  margin-bottom: 4px;
+}
+.mh-tip {
+  font-size: 12px;
+  color: #a16207;
+  opacity: 0.85;
 }
 
 /* 空状态 */

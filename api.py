@@ -88,6 +88,150 @@ def me(user: dict = Depends(get_current_user)) -> dict:
     return user
 
 
+@app.get("/api/me/preferences")
+def get_preferences(user: dict = Depends(get_current_user)) -> dict:
+    return auth.get_preferences(user["id"])
+
+
+@app.put("/api/me/preferences")
+def put_preferences(payload: dict, user: dict = Depends(get_current_user)) -> dict:
+    auth.set_preferences(
+        user["id"],
+        payload.get("default_contract_type", ""),
+        payload.get("default_focus", ""),
+        payload.get("perspective", ""),
+    )
+    return auth.get_preferences(user["id"])
+
+
+@app.get("/api/me/stats")
+def my_stats(user: dict = Depends(get_current_user)) -> dict:
+    """当前用户的审查统计。"""
+    return auth.user_stats(user["id"])
+
+
+@app.get("/api/admin/stats")
+def admin_stats(user: dict = Depends(require_admin)) -> dict:
+    """全局聚合统计（不暴露个人合同明细）。"""
+    return auth.global_stats()
+
+
+@app.get("/api/admin/health")
+def admin_health(user: dict = Depends(require_admin)) -> dict:
+    """系统健康检查：DB、成功/失败、平均耗时、最近一次时间。"""
+    return auth.health_stats()
+
+
+@app.get("/api/admin/failures")
+def admin_failures(user: dict = Depends(require_admin)) -> dict:
+    """最近失败的审查记录。"""
+    return {"failures": auth.recent_failures(20)}
+
+
+@app.post("/api/admin/retry/{review_id}")
+def admin_retry(review_id: int, user: dict = Depends(require_admin)) -> dict:
+    """重试一条失败的审查（仅示例库中的合同；上传文件已删除的需用户重传）。"""
+    r = auth.get_review(review_id)
+    if not r:
+        raise HTTPException(404, "记录不存在")
+    name = r["filename"]
+    path = (config.RAW_DIR / name).resolve()
+    if not str(path).startswith(str(config.RAW_DIR.resolve())) or not path.exists():
+        raise HTTPException(400, "原始文件不在示例库中（上传文件已删除），请让用户重新上传")
+
+    t0 = time.time()
+    try:
+        result = _run_review(path)
+    except Exception as e:  # noqa: BLE001
+        auth.add_review(user["id"], name, 0, 0, 0, None, status="failed", error=str(e)[:300])
+        raise HTTPException(500, f"重试仍失败：{str(e)[:80]}") from e
+    dt = time.time() - t0
+    ov = result["overview"]
+    auth.add_review(
+        user["id"], name, ov["high"], ov["mid"], ov["low"], result.get("judgments"), duration=round(dt, 1)
+    )
+    auth.mark_retried(review_id)
+    return {"ok": True, "overview": ov}
+
+
+@app.post("/api/admin/settings/reset")
+def admin_reset_settings(user: dict = Depends(require_admin)) -> dict:
+    """恢复默认配置。"""
+    auth.set_setting("guard_on", "1")
+    auth.set_setting("guard_low", "5.0")
+    auth.set_setting("guard_high", "8.0")
+    return {
+        "guard_on": auth.get_setting("guard_on", "1") == "1",
+        "guard_low": float(auth.get_setting("guard_low", "5.0") or 5.0),
+        "guard_high": float(auth.get_setting("guard_high", "8.0") or 8.0),
+    }
+
+
+@app.post("/api/admin/failures/clear")
+def admin_clear_failures(user: dict = Depends(require_admin)) -> dict:
+    """只清理演示数据（[DEMO] 开头）的失败记录；真实故障记录保留。"""
+    return {"ok": True, "cleared": auth.clear_failures(demo_only=True)}
+
+
+@app.post("/api/admin/demo/failure")
+def admin_demo_failure(user: dict = Depends(require_admin)) -> dict:
+    """演示用：注入足够多的模拟失败，使失败率超过 5% 阈值（错误信息带 [DEMO] 标记）。"""
+    demo_file = "买卖_二手车买卖合同_GF-2015-0120.docx"
+    errors = [
+        "[DEMO] ReadTimeout: DeepSeek API timeout after 180s",
+        "[DEMO] HTTPError 429: Too Many Requests（限流）",
+        "[DEMO] ConnectionError: 网络连接中断",
+        "[DEMO] TimeoutError: 解析超时（>60s）",
+        "[DEMO] HTTPError 500: 上游服务异常",
+    ]
+    # 按当前总数自适应：目标失败率 6%，且至少注入 6 条
+    h = auth.health_stats()
+    total = h["total"] or 1
+    need = max(6, int(total * 0.06) + 1 - h["failed"])
+    for i in range(need):
+        auth.add_review(
+            user["id"], demo_file, 0, 0, 0, None, status="failed", error=errors[i % len(errors)]
+        )
+    h2 = auth.health_stats()
+    return {
+        "ok": True,
+        "injected": need,
+        "failed": h2["failed"],
+        "total": h2["total"],
+        "rate": round(h2["failed"] / (h2["total"] or 1), 4),
+    }
+
+
+@app.get("/api/admin/settings")
+def admin_get_settings(user: dict = Depends(require_admin)) -> dict:
+    """运行时配置（AI 拦截开关与阈值、审查超时）。"""
+    return {
+        "guard_on": auth.get_setting("guard_on", "1") == "1",
+        "guard_low": float(auth.get_setting("guard_low", "5.0") or 5.0),
+        "guard_high": float(auth.get_setting("guard_high", "8.0") or 8.0),
+        "review_timeout": float(auth.get_setting("review_timeout", "180") or 180),
+    }
+
+
+@app.put("/api/admin/settings")
+def admin_put_settings(payload: dict, user: dict = Depends(require_admin)) -> dict:
+    """更新运行时配置。"""
+    if "guard_on" in payload:
+        auth.set_setting("guard_on", "1" if payload["guard_on"] else "0")
+    if "guard_low" in payload:
+        auth.set_setting("guard_low", str(payload["guard_low"]))
+    if "guard_high" in payload:
+        auth.set_setting("guard_high", str(payload["guard_high"]))
+    if "review_timeout" in payload:
+        auth.set_setting("review_timeout", str(payload["review_timeout"]))
+    return {
+        "guard_on": auth.get_setting("guard_on", "1") == "1",
+        "guard_low": float(auth.get_setting("guard_low", "5.0") or 5.0),
+        "guard_high": float(auth.get_setting("guard_high", "8.0") or 8.0),
+        "review_timeout": float(auth.get_setting("review_timeout", "180") or 180),
+    }
+
+
 @app.get("/api/reviews")
 def my_reviews(user: dict = Depends(get_current_user)) -> dict:
     """当前用户的审查记录；管理员看全部。"""
@@ -123,13 +267,20 @@ def admin_delete_review(review_id: int, user: dict = Depends(require_admin)) -> 
 
 # 惰性单例
 _client = None
+_client_timeout = None
 _types = None
 
 
 def _get_client():
-    global _client
-    if _client is None:
-        _client = EX.make_client()
+    """按管理员配置的「审查超时」创建客户端；超时值变化时自动重建。"""
+    global _client, _client_timeout
+    try:
+        timeout = float(auth.get_setting("review_timeout", "180") or 180)
+    except ValueError:
+        timeout = 180.0
+    if _client is None or _client_timeout != timeout:
+        _client = EX.make_client(timeout=timeout)
+        _client_timeout = timeout
     return _client
 
 
@@ -140,13 +291,13 @@ def _get_types():
     return _types
 
 
-def _run_review(path: Path, focus: str = "") -> dict:
-    """执行完整审查流水线，返回结构化结果。focus 为审查关注点（可选）。"""
+def _run_review(path: Path, focus: str = "", perspective: str = "") -> dict:
+    """执行完整审查流水线，返回结构化结果。focus 关注点，perspective 审查立场。"""
     t0 = time.time()
     paragraphs = parse(path)
     clauses, usage = EX.extract(_get_client(), paragraphs, _get_types())
     clauses = EX.validate(paragraphs, clauses)
-    judgments = assess(clauses, _get_types(), paragraphs, _get_client())
+    judgments = assess(clauses, _get_types(), paragraphs, _get_client(), perspective)
 
     # 对偏离/冲突条款生成修订建议
     clause_map = {c["type"]: c for c in clauses}
@@ -160,7 +311,7 @@ def _run_review(path: Path, focus: str = "") -> dict:
             )
             try:
                 j["revision"] = revision.generate_revision(
-                    j["clause"], full or j.get("evidence", ""), playbook[j["clause"]], _get_client(), focus
+                    j["clause"], full or j.get("evidence", ""), playbook[j["clause"]], _get_client(), focus, perspective
                 )
             except Exception:  # noqa: BLE001
                 j["revision"] = ""
@@ -340,20 +491,42 @@ async def upload_template(file: UploadFile = File(...), user: dict = Depends(get
 
 @app.get("/api/eval")
 def eval_metrics() -> dict:
-    """返回评估指标摘要 + 逐份合同结果。"""
+    """返回评估指标摘要 + 逐份合同结果 + 修复前后对比。"""
     p = config.RESULTS_DIR / "eval_v3.json"
     if not p.exists():
         return {"summary": None, "per_contract": []}
     data = json.loads(p.read_text(encoding="utf-8"))
+
+    before = None
+    before_p = config.RESULTS_DIR / "eval_v3_before_fix.json"
+    if before_p.exists():
+        before = json.loads(before_p.read_text(encoding="utf-8")).get("summary")
+
+    cases: list = []
+    cases_p = config.RESULTS_DIR / "compare_cases.json"
+    if cases_p.exists():
+        cases = json.loads(cases_p.read_text(encoding="utf-8")).get("cases", [])
+
+    qa_cases: list = []
+    qa_p = config.RESULTS_DIR / "compare_qa.json"
+    if qa_p.exists():
+        qa_cases = json.loads(qa_p.read_text(encoding="utf-8")).get("cases", [])
+
     return {
         "summary": data.get("summary", {}),
+        "before": before,
+        "cases": cases,
+        "qa_cases": qa_cases,
         "per_contract": data.get("per_contract", []),
     }
 
 
 @app.post("/api/review")
 async def review_upload(
-    file: UploadFile = File(...), focus: str = Form(""), user: dict = Depends(get_current_user)
+    file: UploadFile = File(...),
+    focus: str = Form(""),
+    perspective: str = Form(""),
+    user: dict = Depends(get_current_user),
 ) -> dict:
     """上传合同并审查。"""
     if not file.filename.lower().endswith(".docx"):
@@ -362,13 +535,28 @@ async def review_upload(
     content = await file.read()
     tmp = config.RAW_DIR.parent / "_api_upload.docx"
     tmp.write_bytes(content)
+    t0 = time.time()
     try:
-        result = _run_review(tmp, focus)
+        result = _run_review(tmp, focus, perspective)
+    except Exception as e:  # noqa: BLE001
+        auth.add_review(
+            user["id"], file.filename, 0, 0, 0, None, status="failed", error=str(e)[:300]
+        )
+        raise HTTPException(500, "审查失败，请联系管理员") from e
     finally:
         tmp.unlink(missing_ok=True)
+    dt = time.time() - t0
     result["filename"] = file.filename
     ov = result["overview"]
-    auth.add_review(user["id"], file.filename, ov["high"], ov["mid"], ov["low"])
+    auth.add_review(
+        user["id"],
+        file.filename,
+        ov["high"],
+        ov["mid"],
+        ov["low"],
+        result.get("judgments"),
+        duration=round(dt, 1),
+    )
     return result
 
 
@@ -377,15 +565,39 @@ async def review_sample(payload: dict, user: dict = Depends(get_current_user)) -
     """按文件名审查示例合同。"""
     name = payload.get("name", "")
     focus = payload.get("focus", "")
+    perspective = payload.get("perspective", "")
     path = (config.RAW_DIR / name).resolve()
     # 防路径穿越：必须落在 raw 目录内
     if not str(path).startswith(str(config.RAW_DIR.resolve())) or not path.exists():
         raise HTTPException(404, "合同不存在")
-    result = _run_review(path, focus)
+    t0 = time.time()
+    try:
+        result = _run_review(path, focus, perspective)
+    except Exception as e:  # noqa: BLE001
+        auth.add_review(user["id"], name, 0, 0, 0, None, status="failed", error=str(e)[:300])
+        raise HTTPException(500, "审查失败，请联系管理员") from e
+    dt = time.time() - t0
     result["filename"] = name
     ov = result["overview"]
-    auth.add_review(user["id"], name, ov["high"], ov["mid"], ov["low"])
+    auth.add_review(
+        user["id"], name, ov["high"], ov["mid"], ov["low"], result.get("judgments"), duration=round(dt, 1)
+    )
     return result
+
+
+@app.get("/api/clause_text")
+def clause_text(name: str, clause: str, user: dict = Depends(get_current_user)) -> dict:
+    """按条款号取合同原文（供对话里点击引用时展示）。"""
+    path = (config.RAW_DIR / name).resolve()
+    if not str(path).startswith(str(config.RAW_DIR.resolve())) or not path.exists():
+        raise HTTPException(404, "合同不存在")
+
+    from src.assess import _find_clause_text
+    from src.parser import parse as _parse
+
+    paragraphs = _parse(path)
+    text = _find_clause_text(paragraphs, clause, "")
+    return {"clause": clause, "text": text or ""}
 
 
 @app.post("/api/compare")
@@ -407,6 +619,25 @@ async def compare_contracts(payload: dict, user: dict = Depends(get_current_user
     return result
 
 
+def _review_context(name: str) -> str:
+    """把最近一次审查的结论拼成上下文，供问答回答"哪条高风险"。"""
+    r = auth.latest_review(name)
+    if not r or not r.get("judgments"):
+        return ""
+    js = r["judgments"]
+    high = [j.get("clause", "") for j in js if j.get("severity") == "高"]
+    mid = [j.get("clause", "") for j in js if j.get("severity") == "中"]
+    lines = [f"（AI 对话附加信息）这份合同最近一次审查：高风险 {len(high)} 条，中风险 {len(mid)} 条。"]
+    if high:
+        lines.append("高风险条款：" + "、".join(high))
+    if mid:
+        lines.append("中风险条款：" + "、".join(mid))
+    for j in js:
+        if j.get("severity") == "高":
+            lines.append(f"- {j.get('clause', '')}：{j.get('verdict', '')}，{str(j.get('reason', ''))[:70]}")
+    return "\n".join(lines)
+
+
 @app.post("/api/chat")
 async def chat(payload: dict, user: dict = Depends(get_current_user)) -> dict:
     """基于合同原文的问答（RAG）。"""
@@ -420,7 +651,7 @@ async def chat(payload: dict, user: dict = Depends(get_current_user)) -> dict:
     if not str(path).startswith(str(config.RAW_DIR.resolve())) or not path.exists():
         raise HTTPException(404, "合同不存在")
 
-    return qa.answer_question(path, question, _get_client(), history)
+    return qa.answer_question(path, question, _get_client(), history, _review_context(name))
 
 
 @app.post("/api/law_chat")
@@ -446,7 +677,9 @@ async def chat_stream(payload: dict, user: dict = Depends(get_current_user)):
     if not str(path).startswith(str(config.RAW_DIR.resolve())) or not path.exists():
         raise HTTPException(404, "合同不存在")
     return StreamingResponse(
-        qa.stream_answer_question(path, question, _get_client(), payload.get("history") or []),
+        qa.stream_answer_question(
+            path, question, _get_client(), payload.get("history") or [], _review_context(name)
+        ),
         media_type="text/event-stream",
         headers=_SSE_HEADERS,
     )

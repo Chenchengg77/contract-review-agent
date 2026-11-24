@@ -9,15 +9,23 @@ import json
 from pathlib import Path
 
 import config
+from src.guard import REFUSAL, check_scope
 from src.parser import parse
 from src.retrieve import BM25Index
 
 _SYSTEM = (
-    "你是合同审查助手。请**只根据下面提供的合同原文**回答用户问题。\n"
-    "规则：\n"
-    "1. 如果合同原文里没有相关信息，直接回答「合同里没有找到相关内容」，不要编造；\n"
-    "2. 回答时引用条款号（如「第八条」）；\n"
-    "3. 回答简洁，2~4 句话。"
+    "你是「法务小助手」，一位有 10 年经验的合同审查法务，说话专业但温和。\n"
+    "语气规则：\n"
+    "1. 用「我」自称，称呼对方为「你」；\n"
+    "2. 先说结论，再说原因，最后给建议；\n"
+    "3. 不要用「综上所述」「以下是」「首先/其次/最后」这类机器人腔；\n"
+    "4. 不确定时直接说「这条建议找律师确认」，不要装懂；\n"
+    "5. 风险高时提醒一句「这条要小心」。\n\n"
+    "事实规则：\n"
+    "6. 只根据下面提供的合同原文回答，没写就说「合同里没写这条」，不要编造；\n"
+    "7. 如果提供了「审查结果摘要」，可以直接用它回答「哪条高风险」这类问题；\n"
+    "8. 引用条款号（如「第八条」）；\n"
+    "9. 回答简洁，2~4 句话。"
 )
 
 
@@ -34,13 +42,25 @@ def answer_question(
     question: str,
     client,
     history: list[dict] | None = None,
+    review_ctx: str = "",
 ) -> dict:
-    """检索合同 → 拼 prompt → LLM 回答（带引用、能拒答）。"""
+    """检索合同 → 前置拦截 → 拼 prompt → LLM 回答（带引用、能拒答）。"""
     paragraphs = parse(path)
     idx = BM25Index()
     for p in paragraphs:
         idx.add(p["text"], p)
     hits = idx.search(question, k=6)
+
+    # 前置拦截：越界问题直接拒答，不调 LLM（省钱、快、提示明确）
+    ok, guard_why = check_scope(question, hits, client)
+    if not ok:
+        return {
+            "answer": REFUSAL,
+            "citations": [],
+            "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+            "refused": True,
+            "guard": guard_why,
+        }
 
     context = _build_context(hits)
     messages = [{"role": "system", "content": _SYSTEM}]
@@ -51,7 +71,8 @@ def answer_question(
             messages.append({"role": role, "content": content})
     messages.append({
         "role": "user",
-        "content": f"【合同原文片段】\n{context}\n\n【用户问题】\n{question}",
+        "content": (f"【审查结果摘要】\n{review_ctx}\n\n" if review_ctx else "")
+        + f"【合同原文片段】\n{context}\n\n【用户问题】\n{question}",
     })
 
     resp = client.chat.completions.create(
@@ -66,7 +87,7 @@ def answer_question(
         "total_tokens": resp.usage.total_tokens,
     }
     citations = sorted({h["meta"].get("clause_no") or "正文" for h in hits})
-    return {"answer": answer, "citations": citations, "usage": usage}
+    return {"answer": answer, "citations": citations, "usage": usage, "refused": False, "guard": guard_why}
 
 
 def stream_answer_question(
@@ -74,6 +95,7 @@ def stream_answer_question(
     question: str,
     client,
     history: list[dict] | None = None,
+    review_ctx: str = "",
 ):
     """流式版本：先发 citations 事件，再逐 token 发 SSE，最后 done。"""
     paragraphs = parse(path)
@@ -81,6 +103,14 @@ def stream_answer_question(
     for p in paragraphs:
         idx.add(p["text"], p)
     hits = idx.search(question, k=6)
+
+    # 前置拦截：越界直接拒答，不进入生成
+    ok, _guard_why = check_scope(question, hits, client)
+    if not ok:
+        yield f"event: citations\ndata: {json.dumps({'citations': []}, ensure_ascii=False)}\n\n"
+        yield f"event: token\ndata: {json.dumps({'text': REFUSAL}, ensure_ascii=False)}\n\n"
+        yield "event: done\ndata: {}\n\n"
+        return
 
     context = _build_context(hits)
     messages = [{"role": "system", "content": _SYSTEM}]
@@ -91,7 +121,8 @@ def stream_answer_question(
             messages.append({"role": role, "content": content})
     messages.append({
         "role": "user",
-        "content": f"【合同原文片段】\n{context}\n\n【用户问题】\n{question}",
+        "content": (f"【审查结果摘要】\n{review_ctx}\n\n" if review_ctx else "")
+        + f"【合同原文片段】\n{context}\n\n【用户问题】\n{question}",
     })
 
     citations = sorted({h["meta"].get("clause_no") or "正文" for h in hits})

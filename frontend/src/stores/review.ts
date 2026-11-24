@@ -8,6 +8,8 @@ export const useReviewStore = defineStore('review', {
     contracts: [] as string[],
     selected: '',
     focus: '',
+    perspective: '',
+    lastReview: null as { filename: string; created_at: number } | null,
     loading: false,
     progress: 0,
     stage: 0,
@@ -18,8 +20,15 @@ export const useReviewStore = defineStore('review', {
     async loadContracts() {
       if (this.contracts.length) return
       try {
-        const { data } = await api.get('/contracts')
-        this.contracts = data.contracts || []
+        const [c, s] = await Promise.all([api.get('/contracts'), api.get('/me/stats')])
+        this.contracts = c.data.contracts || []
+        const recent = s.data?.recent || []
+        if (recent.length) {
+          this.lastReview = {
+            filename: recent[0].filename,
+            created_at: recent[0].created_at,
+          }
+        }
         if (this.contracts.length && !this.selected) this.selected = this.contracts[0]
       } catch {
         /* ignore */
@@ -47,9 +56,16 @@ export const useReviewStore = defineStore('review', {
           const fd = new FormData()
           fd.append('file', file)
           fd.append('focus', this.focus)
+          fd.append('perspective', this.perspective)
           data = (await api.post('/review', fd)).data
         } else {
-          data = (await api.post('/review_sample', { name: this.selected, focus: this.focus })).data
+          data = (
+            await api.post('/review_sample', {
+              name: this.selected,
+              focus: this.focus,
+              perspective: this.perspective,
+            })
+          ).data
         }
         this.progress = 100
         this.stage = 3

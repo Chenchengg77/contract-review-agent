@@ -66,6 +66,138 @@ def init_db() -> None:
                 created_at REAL NOT NULL
             )"""
         )
+        # 轻量迁移：给 users 加偏好字段（已有库也能升级）
+        cols = [r[1] for r in c.execute("PRAGMA table_info(users)").fetchall()]
+        if "default_contract_type" not in cols:
+            c.execute("ALTER TABLE users ADD COLUMN default_contract_type TEXT NOT NULL DEFAULT ''")
+        if "default_focus" not in cols:
+            c.execute("ALTER TABLE users ADD COLUMN default_focus TEXT NOT NULL DEFAULT ''")
+        if "perspective" not in cols:
+            c.execute("ALTER TABLE users ADD COLUMN perspective TEXT NOT NULL DEFAULT ''")
+        # 轻量迁移：reviews 存判定明细（供 AI 对话回答"哪条高风险"）
+        rcols = [r[1] for r in c.execute("PRAGMA table_info(reviews)").fetchall()]
+        if "judgments" not in rcols:
+            c.execute("ALTER TABLE reviews ADD COLUMN judgments TEXT NOT NULL DEFAULT ''")
+        if "status" not in rcols:
+            c.execute("ALTER TABLE reviews ADD COLUMN status TEXT NOT NULL DEFAULT 'ok'")
+        if "error" not in rcols:
+            c.execute("ALTER TABLE reviews ADD COLUMN error TEXT NOT NULL DEFAULT ''")
+        if "duration" not in rcols:
+            c.execute("ALTER TABLE reviews ADD COLUMN duration REAL NOT NULL DEFAULT 0")
+        # 运行时配置（管理员可改）
+        c.execute(
+            """CREATE TABLE IF NOT EXISTS settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            )"""
+        )
+
+
+# ---- 审查偏好 ----
+def get_preferences(user_id: int) -> dict:
+    with _db() as c:
+        row = c.execute(
+            "SELECT default_contract_type, default_focus, perspective FROM users WHERE id=?",
+            (user_id,),
+        ).fetchone()
+    if not row:
+        return {"default_contract_type": "", "default_focus": "", "perspective": ""}
+    return dict(row)
+
+
+def set_preferences(user_id: int, contract_type: str, focus: str, perspective: str = "") -> None:
+    with _db() as c:
+        c.execute(
+            "UPDATE users SET default_contract_type=?, default_focus=?, perspective=? WHERE id=?",
+            (contract_type or "", focus or "", perspective or "", user_id),
+        )
+
+
+# ---- 统计 ----
+def contract_category(filename: str) -> str:
+    """从文件名推合同类别：买卖_xxx.docx → 买卖。"""
+    stem = (filename or "").rsplit(".", 1)[0]
+    if "_" in stem:
+        return stem.split("_", 1)[0]
+    return "其他"
+
+
+def _aggregate(reviews: list[dict]) -> dict:
+    from collections import Counter
+
+    cats = Counter(contract_category(r["filename"]) for r in reviews)
+    return {
+        "total": len(reviews),
+        "high": sum(r["high"] for r in reviews),
+        "mid": sum(r["mid"] for r in reviews),
+        "low": sum(r["low"] for r in reviews),
+        "by_category": [{"name": k, "count": v} for k, v in cats.most_common()],
+    }
+
+
+def user_stats(user_id: int) -> dict:
+    with _db() as c:
+        rows = c.execute(
+            "SELECT filename, high, mid, low, created_at, judgments FROM reviews WHERE user_id=? "
+            "ORDER BY created_at DESC",
+            (user_id,),
+        ).fetchall()
+    reviews = [dict(r) for r in rows]
+    out = _aggregate(reviews)
+    out["recent"] = reviews[:10]
+
+    # 风险画像：按「合同类型」分组，统计各类型下最常出问题的条款
+    import json
+
+    def _load_js(r: dict) -> list[dict]:
+        raw = r.get("judgments") or ""
+        try:
+            return json.loads(raw) if raw else []
+        except Exception:  # noqa: BLE001
+            return []
+
+    by_type: dict[str, dict] = {}
+    for r in reviews:
+        cat = contract_category(r["filename"])
+        t = by_type.setdefault(cat, {"type": cat, "reviews": 0, "counter": {}})
+        t["reviews"] += 1
+        for j in _load_js(r):
+            clause = j.get("clause")
+            if not clause:
+                continue
+            d = t["counter"].setdefault(clause, {"clause": clause, "high": 0, "mid": 0})
+            sev = j.get("severity")
+            if sev == "高":
+                d["high"] += 1
+            elif sev == "中":
+                d["mid"] += 1
+
+    profiles = []
+    for t in by_type.values():
+        tops = sorted(t["counter"].values(), key=lambda x: (-x["high"], -x["mid"]))[:3]
+        profiles.append({"type": t["type"], "reviews": t["reviews"], "top_clauses": tops})
+    profiles.sort(key=lambda x: -x["reviews"])
+    out["type_profiles"] = profiles[:4]
+    return out
+
+
+def global_stats() -> dict:
+    with _db() as c:
+        user_count = c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+        rows = c.execute(
+            "SELECT r.user_id, u.username, r.filename, r.high, r.mid, r.low, r.created_at "
+            "FROM reviews r JOIN users u ON r.user_id=u.id"
+        ).fetchall()
+    reviews = [dict(r) for r in rows]
+    out = _aggregate(reviews)
+    out["users"] = user_count
+
+    # 活跃用户 Top 5（按审查次数）
+    from collections import Counter
+
+    counts = Counter(r["username"] for r in reviews)
+    out["top_users"] = [{"username": k, "count": v} for k, v in counts.most_common(5)]
+    return out
 
 
 # ---- 密码 ----
@@ -137,13 +269,121 @@ def delete_session(token: str) -> None:
         c.execute("DELETE FROM sessions WHERE token=?", (token,))
 
 
-# ---- 审查记录 ----
-def add_review(user_id: int, filename: str, high: int, mid: int, low: int) -> None:
+# ---- 运行时配置 ----
+def get_setting(key: str, default: str = "") -> str:
+    with _db() as c:
+        row = c.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
+    return row["value"] if row else default
+
+
+def set_setting(key: str, value: str) -> None:
     with _db() as c:
         c.execute(
-            "INSERT INTO reviews(user_id, filename, high, mid, low, created_at) VALUES(?,?,?,?,?,?)",
-            (user_id, filename, high, mid, low, time.time()),
+            "INSERT INTO settings(key, value) VALUES(?, ?) "
+            "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+            (key, str(value)),
         )
+
+
+def health_stats() -> dict:
+    """健康检查：DB、总量、失败数、成功率、平均耗时、最近一次时间。"""
+    with _db() as c:
+        db_ok = c.execute("SELECT 1").fetchone() is not None
+        total = c.execute("SELECT COUNT(*) FROM reviews").fetchone()[0]
+        failed = c.execute("SELECT COUNT(*) FROM reviews WHERE status='failed'").fetchone()[0]
+        avg_dur = c.execute(
+            "SELECT AVG(duration) FROM reviews WHERE status='ok' AND duration>0"
+        ).fetchone()[0]
+        last = c.execute("SELECT created_at FROM reviews ORDER BY created_at DESC LIMIT 1").fetchone()
+    return {
+        "db": db_ok,
+        "total": total,
+        "failed": failed,
+        "success_rate": round((total - failed) / total, 4) if total else 1.0,
+        "avg_duration": round(float(avg_dur or 0), 1),
+        "last_at": last["created_at"] if last else None,
+    }
+
+
+def recent_failures(limit: int = 20) -> list[dict]:
+    with _db() as c:
+        rows = c.execute(
+            "SELECT r.*, u.username FROM reviews r JOIN users u ON r.user_id=u.id "
+            "WHERE r.status='failed' ORDER BY r.created_at DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def get_review(review_id: int) -> dict | None:
+    with _db() as c:
+        row = c.execute("SELECT * FROM reviews WHERE id=?", (review_id,)).fetchone()
+    return dict(row) if row else None
+
+
+def mark_retried(review_id: int) -> None:
+    """重试成功后，把原失败记录标记为已处理（不再计入失败率）。"""
+    with _db() as c:
+        c.execute("UPDATE reviews SET status='retried' WHERE id=?", (review_id,))
+
+
+def clear_failures(demo_only: bool = True) -> int:
+    """把失败记录标记为已处理。
+
+    demo_only=True 时只清理 [DEMO] 开头的演示数据，**真实失败记录保留**，避免掩盖事故。
+    """
+    with _db() as c:
+        if demo_only:
+            cur = c.execute(
+                "UPDATE reviews SET status='retried' WHERE status='failed' AND error LIKE ?",
+                ("[DEMO]%",),
+            )
+        else:
+            cur = c.execute("UPDATE reviews SET status='retried' WHERE status='failed'")
+        return cur.rowcount
+
+
+# ---- 审查记录 ----
+def add_review(
+    user_id: int,
+    filename: str,
+    high: int,
+    mid: int,
+    low: int,
+    judgments: list[dict] | None = None,
+    status: str = "ok",
+    error: str = "",
+    duration: float = 0,
+) -> None:
+    import json
+
+    payload = json.dumps(judgments, ensure_ascii=False) if judgments else ""
+    with _db() as c:
+        c.execute(
+            "INSERT INTO reviews(user_id, filename, high, mid, low, created_at, judgments, status, error, duration) "
+            "VALUES(?,?,?,?,?,?,?,?,?,?)",
+            (user_id, filename, high, mid, low, time.time(), payload, status, error, duration),
+        )
+
+
+def latest_review(filename: str) -> dict | None:
+    """取某份合同最近一次审查（含判定明细），供 AI 对话回答"哪条高风险"。"""
+    import json
+
+    with _db() as c:
+        row = c.execute(
+            "SELECT * FROM reviews WHERE filename=? ORDER BY created_at DESC LIMIT 1",
+            (filename,),
+        ).fetchone()
+    if not row:
+        return None
+    d = dict(row)
+    raw = d.pop("judgments", "") or ""
+    try:
+        d["judgments"] = json.loads(raw) if raw else []
+    except Exception:  # noqa: BLE001
+        d["judgments"] = []
+    return d
 
 
 def list_reviews(user_id: int | None = None, limit: int = 50) -> list[dict]:
@@ -167,7 +407,10 @@ def list_reviews(user_id: int | None = None, limit: int = 50) -> list[dict]:
 def list_users() -> list[dict]:
     with _db() as c:
         rows = c.execute(
-            "SELECT id, username, role, created_at FROM users ORDER BY id"
+            """SELECT u.id, u.username, u.role, u.created_at,
+                      u.default_contract_type, u.default_focus, u.perspective,
+                      (SELECT COUNT(*) FROM reviews r WHERE r.user_id = u.id) AS review_count
+               FROM users u ORDER BY u.id"""
         ).fetchall()
     return [dict(r) for r in rows]
 

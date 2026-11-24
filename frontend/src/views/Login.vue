@@ -55,7 +55,7 @@ async function submit() {
       await store.register(username.value, password.value)
     }
     ElMessage.success(mode.value === 'login' ? '登录成功' : '注册成功')
-    router.push('/home')
+    router.push(store.isAdmin ? '/admin/overview' : '/home')
   } catch (e: any) {
     ElMessage.error(e.response?.data?.detail || '操作失败')
   } finally {

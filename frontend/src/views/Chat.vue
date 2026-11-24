@@ -57,9 +57,13 @@ const hint = computed(() =>
 
 onMounted(async () => {
   try {
-    const { data } = await api.get('/contracts')
-    contracts.value = data.contracts || []
-    if (contracts.value.length) contract.value = contracts.value[0]
+    const [c, s] = await Promise.all([api.get('/contracts'), api.get('/me/stats')])
+    contracts.value = c.data.contracts || []
+    // 默认选「上次审查的那份」，更贴合使用习惯
+    const last = s.data?.recent?.[0]?.filename
+    if (contracts.value.length) {
+      contract.value = last && contracts.value.includes(last) ? last : contracts.value[0]
+    }
   } catch {
     /* ignore */
   }
@@ -68,9 +72,37 @@ onMounted(async () => {
 
 function md(text: string): string {
   try {
-    return marked.parse(text) as string
+    let html = marked.parse(text) as string
+    // 把「第X条」变成可点击的引用
+    html = html.replace(
+      /第([一二三四五六七八九十百零〇0-9]+)条/g,
+      '<span class="clause-link" data-clause="第$1条">第$1条</span>'
+    )
+    return html
   } catch {
     return text
+  }
+}
+
+// —— 引用可点击：点击「第X条」查看原文 ——
+const clauseVisible = ref(false)
+const clauseTitle = ref('')
+const clauseText = ref('')
+
+async function onAnswerClick(e: MouseEvent) {
+  const el = (e.target as HTMLElement).closest('.clause-link') as HTMLElement | null
+  if (!el) return
+  const clause = el.dataset.clause || ''
+  if (!clause) return
+  try {
+    const { data } = await api.get('/clause_text', {
+      params: { name: contract.value, clause },
+    })
+    clauseTitle.value = clause
+    clauseText.value = data.text || '（未找到该条款原文）'
+    clauseVisible.value = true
+  } catch {
+    ElMessage.error('获取条款原文失败')
   }
 }
 
@@ -288,7 +320,7 @@ async function send() {
           <p>{{ hint }}</p>
         </div>
         <div v-for="(m, i) in messages" :key="i" class="msg" :class="m.role">
-          <div class="bubble chat-text" v-html="m.html"></div>
+          <div class="bubble chat-text" v-html="m.html" @click="onAnswerClick"></div>
         </div>
       </div>
       <div class="input-bar">
@@ -300,6 +332,11 @@ async function send() {
         <el-button type="primary" :loading="sending" @click="send">发送</el-button>
       </div>
     </div>
+
+    <!-- 引用原文 -->
+    <el-dialog v-model="clauseVisible" :title="clauseTitle || '条款原文'" width="640px">
+      <pre class="clause-origin">{{ clauseText }}</pre>
+    </el-dialog>
   </div>
 </template>
 
@@ -308,6 +345,31 @@ async function send() {
   display: flex;
   height: calc(100vh - 60px);
   background: #f8fafc;
+}
+/* 可点击的条款引用 */
+:deep(.clause-link) {
+  color: #1d4ed8;
+  cursor: pointer;
+  border-bottom: 1px dashed #93c5fd;
+  padding: 0 1px;
+}
+:deep(.clause-link:hover) {
+  background: #eff6ff;
+  border-radius: 3px;
+}
+.clause-origin {
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 13px;
+  line-height: 1.9;
+  color: #334155;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 420px;
+  overflow: auto;
+  margin: 0;
 }
 .side {
   width: 288px;

@@ -42,11 +42,12 @@ def load_clause_types() -> list[dict]:
     return data["clause_types"]
 
 
-def make_client() -> OpenAI:
-    """按 config 构造 OpenAI 兼容客户端（DeepSeek）。"""
+def make_client(timeout: float = 180) -> OpenAI:
+    """按 config 构造 OpenAI 兼容客户端（DeepSeek）。timeout 秒，可由管理员配置。"""
     return OpenAI(
         api_key=config.require_api_key(),
         base_url=config.DEEPSEEK_BASE_URL,
+        timeout=timeout,
     )
 
 
