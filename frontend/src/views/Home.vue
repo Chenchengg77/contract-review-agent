@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import api from '../api'
@@ -9,7 +9,13 @@ import FallingLeaves from '../components/FallingLeaves.vue'
 // —— 滚动入场动画 ——
 let io: IntersectionObserver | null = null
 
-onMounted(() => {
+/** 观察当前 DOM 里所有还没出现过的 .reveal（异步渲染出来的也要观察） */
+function observeReveals() {
+  if (!io) return
+  document.querySelectorAll('.reveal:not(.in)').forEach((el) => io!.observe(el))
+}
+
+onMounted(async () => {
   io = new IntersectionObserver(
     (entries) => {
       entries.forEach((e) => {
@@ -21,7 +27,20 @@ onMounted(() => {
     },
     { threshold: 0.12, rootMargin: '0px 0px -60px 0px' }
   )
-  document.querySelectorAll('.reveal').forEach((el) => io?.observe(el))
+  observeReveals()
+
+  try {
+    const { data } = await api.get('/eval')
+    summary.value = data.summary
+    before.value = data.before
+    cases.value = data.cases || []
+    qaCases.value = data.qa_cases || []
+  } catch {
+    /* ignore */
+  }
+  // 数据回来后新渲染的区块，重新挂观察
+  await nextTick()
+  observeReveals()
 })
 
 onBeforeUnmount(() => io?.disconnect())
@@ -29,23 +48,23 @@ onBeforeUnmount(() => io?.disconnect())
 const router = useRouter()
 const store = useUserStore()
 const summary = ref<any>(null)
-
-onMounted(async () => {
-  try {
-    const { data } = await api.get('/eval')
-    summary.value = data.summary
-  } catch {
-    /* ignore */
-  }
-})
+const before = ref<any>(null)
+const cases = ref<any[]>([])
+const qaCases = ref<any[]>([])
 
 const greeting = computed(() => {
   const h = new Date().getHours()
   return h < 6 ? '夜深了' : h < 12 ? '早上好' : h < 18 ? '下午好' : '晚上好'
 })
 
-function pct(v: number | undefined | null) {
-  return v == null ? '—' : (v * 100).toFixed(1) + '%'
+function pct(v: number | undefined | null, digits = 1) {
+  return v == null ? '—' : (v * 100).toFixed(digits) + '%'
+}
+
+function delta(a: number | undefined | null, b: number | undefined | null) {
+  if (a == null || b == null) return '—'
+  const d = (b - a) * 100
+  return (d >= 0 ? '+' : '') + d.toFixed(2) + '%'
 }
 
 const stats = computed(() => [
@@ -66,6 +85,27 @@ const abilities = [
   { n: '02', title: '判定可追溯', desc: '合规/偏离/缺失/冲突，每条引用条款号，可点开看原文。' },
   { n: '03', title: '质量可量化', desc: '自建 31 份合同 / 403 条金标评测，数字可复现。' },
   { n: '04', title: '可运维', desc: '健康检查、失败重试、运行时配置，出问题能定位能修。' },
+]
+
+const advantages = [
+  {
+    n: '01',
+    title: '只依据原文，找不到就拒答',
+    desc: '检索不到相关条款时直接说「没找到」，不调用模型硬编——回答有边界。',
+    proof: '机制 · BM25 检索 + 阈值 + 前置护栏',
+  },
+  {
+    n: '02',
+    title: '每条判定都指到条款号',
+    desc: '不是一句结论，而是「结论 + 条款位置 + 原文」，点开即可核对。',
+    proof: '机制 · 抽取记录 clause_no 与原文片段',
+  },
+  {
+    n: '03',
+    title: '准确率是测出来的',
+    desc: '31 份合同、403 条人工金标：抽取 95.53%、判定 91.07%，数据可现场复现。',
+    proof: '机制 · 自建评测集，/api/eval 可查',
+  },
 ]
 
 const steps = [
@@ -191,6 +231,99 @@ const steps = [
             <div class="item-title">{{ a.title }}</div>
             <div class="item-desc">{{ a.desc }}</div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 产品优势：第一梯队 -->
+    <section class="section">
+      <div class="section-inner">
+        <div class="sec-head reveal">
+          <div class="sec-eyebrow">WHY US</div>
+          <h2>和直接用 AI 聊天，差在哪</h2>
+        </div>
+        <div class="adv-grid">
+          <div
+            v-for="(a, i) in advantages"
+            :key="a.n"
+            class="adv reveal"
+            :style="{ transitionDelay: i * 90 + 'ms' }"
+          >
+            <div class="adv-n">{{ a.n }}</div>
+            <div class="adv-title">{{ a.title }}</div>
+            <div class="adv-desc">{{ a.desc }}</div>
+            <div class="adv-proof">{{ a.proof }}</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 对比 1：前置拦截 -->
+    <section v-if="qaCases.length" class="section">
+      <div class="section-inner">
+        <div class="sec-head reveal">
+          <div class="sec-eyebrow">GUARDRAILS</div>
+          <h2>越界的问题，不该让模型硬答</h2>
+        </div>
+        <div class="cmp-list">
+          <div v-for="c in qaCases" :key="c.question" class="cmp reveal">
+            <div class="cmp-q">问：{{ c.question }}</div>
+            <div class="cmp-cols">
+              <div class="cmp-col before">
+                <div class="cmp-tag">改前 · 照常调 LLM</div>
+                <div class="cmp-text">{{ c.before.answer }}</div>
+                <div class="cmp-meta">{{ c.before.cost }}<br />{{ c.before.why }}</div>
+              </div>
+              <div class="cmp-col after">
+                <div class="cmp-tag">改后 · 前置拦截</div>
+                <div class="cmp-text">{{ c.after.answer }}</div>
+                <div class="cmp-meta">{{ c.after.cost }}<br />{{ c.after.why }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 对比 2：版本对比 -->
+    <section v-if="before && summary" class="section tint">
+      <div class="section-inner">
+        <div class="sec-head reveal">
+          <div class="sec-eyebrow">EVALUATION</div>
+          <h2>准确率是修出来的，不是写出来的</h2>
+        </div>
+
+        <div class="vtable reveal">
+          <div class="vrow vhead">
+            <span>指标</span><span>修复前</span><span>修复后</span><span>变化</span>
+          </div>
+          <div class="vrow">
+            <span>判定准确率</span>
+            <span class="old">{{ pct(before.judgment?.verdict_accuracy, 2) }}</span>
+            <span class="new">{{ pct(summary.judgment?.verdict_accuracy, 2) }}</span>
+            <span class="delta">{{ delta(before.judgment?.verdict_accuracy, summary.judgment?.verdict_accuracy) }}</span>
+          </div>
+          <div class="vrow">
+            <span>严重度准确率</span>
+            <span class="old">{{ pct(before.judgment?.severity_accuracy, 2) }}</span>
+            <span class="new">{{ pct(summary.judgment?.severity_accuracy, 2) }}</span>
+            <span class="delta">{{ delta(before.judgment?.severity_accuracy, summary.judgment?.severity_accuracy) }}</span>
+          </div>
+        </div>
+
+        <div v-for="c in cases" :key="c.clause" class="vcase reveal">
+          <div class="vcase-head">{{ c.contract }} · {{ c.clause }}</div>
+          <div class="cmp-cols">
+            <div class="cmp-col before">
+              <div class="cmp-tag">修复前 · {{ c.before.verdict }}（{{ c.before.severity }}）</div>
+              <div class="cmp-text">{{ c.before.reason }}</div>
+            </div>
+            <div class="cmp-col after">
+              <div class="cmp-tag">修复后 · {{ c.after.verdict }}（{{ c.after.severity }}）</div>
+              <div class="cmp-text">{{ c.after.reason }}</div>
+            </div>
+          </div>
+          <div class="vcause">原因：{{ c.root_cause }}</div>
         </div>
       </div>
     </section>
@@ -535,6 +668,155 @@ const steps = [
   font-size: 13px;
   line-height: 2;
   color: var(--muted);
+}
+/* 产品优势 */
+.adv-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 44px;
+  border-top: 1px solid var(--line);
+  padding-top: 44px;
+}
+.adv {
+  padding: 0;
+}
+.adv-n {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #c3bfb6;
+  margin-bottom: 16px;
+}
+.adv-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 12px;
+  letter-spacing: 0.5px;
+}
+.adv-desc {
+  font-size: 13px;
+  line-height: 2;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+.adv-proof {
+  display: inline-block;
+  font-size: 11px;
+  color: #0f766e;
+  background: #f4faf8;
+  border: 1px solid #d9ece5;
+  border-radius: 2px;
+  padding: 4px 9px;
+  letter-spacing: 0.3px;
+}
+/* 对比块 */
+.cmp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.cmp {
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: #fff;
+  padding: 22px 24px;
+}
+.cmp-q {
+  font-size: 13px;
+  color: #6b6f76;
+  margin-bottom: 14px;
+  letter-spacing: 0.3px;
+}
+.cmp-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.cmp-col {
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 14px 16px;
+}
+.cmp-col.before {
+  background: #fcfbf9;
+}
+.cmp-col.after {
+  background: #f6fbf8;
+  border-color: #cfe8da;
+}
+.cmp-tag {
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: #8a867d;
+  margin-bottom: 8px;
+}
+.cmp-col.after .cmp-tag {
+  color: #0f766e;
+}
+.cmp-text {
+  font-size: 12.5px;
+  line-height: 1.9;
+  color: #475569;
+}
+.cmp-meta {
+  font-size: 10.5px;
+  color: #a39d92;
+  margin-top: 10px;
+  line-height: 1.8;
+}
+/* 版本对比表 */
+.vtable {
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  background: #fff;
+}
+.vrow {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  padding: 13px 18px;
+  border-top: 1px solid var(--line);
+  font-size: 12.5px;
+  color: #475569;
+}
+.vrow:first-child {
+  border-top: none;
+  background: #faf8f4;
+}
+.vrow.vhead {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #8a867d;
+}
+.vrow .old {
+  color: #a39d92;
+}
+.vrow .new {
+  color: #14161a;
+  font-weight: 700;
+}
+.vrow .delta {
+  color: #0f766e;
+  font-weight: 600;
+}
+.vcase {
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: #fff;
+  padding: 22px 24px;
+}
+.vcase-head {
+  font-size: 13px;
+  font-weight: 600;
+  color: #14161a;
+  margin-bottom: 14px;
+}
+.vcause {
+  font-size: 11.5px;
+  color: #a39d92;
+  margin-top: 14px;
+  line-height: 1.8;
 }
 /* 流程 */
 .steps {
