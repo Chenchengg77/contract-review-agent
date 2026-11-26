@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
+import tempfile
 import time
 from pathlib import Path
 
@@ -66,11 +68,68 @@ def require_admin(user: dict = Depends(get_current_user)) -> dict:
 @app.post("/api/auth/register")
 def register(payload: dict) -> dict:
     try:
-        user = auth.create_user(payload.get("username", ""), payload.get("password", ""))
+        user = auth.create_user(
+            payload.get("username", ""),
+            payload.get("password", ""),
+            question=payload.get("security_question", ""),
+            answer=payload.get("security_answer", ""),
+        )
     except ValueError as e:
         raise HTTPException(400, str(e))
     token = auth.create_session(user["id"])
     return {"token": token, "user": user}
+
+
+# ---- 找回密码（安全问题）----
+_reset_attempts: dict[str, dict] = {}
+RESET_MAX_TRIES = 5
+RESET_LOCK_SECONDS = 600
+
+
+@app.post("/api/auth/forgot/question")
+def forgot_question(payload: dict) -> dict:
+    """第一步：用用户名取回安全问题。"""
+    username = str(payload.get("username", "")).strip()
+    if not username:
+        raise HTTPException(400, "请输入用户名")
+    q = auth.get_security_question(username)
+    if q is None:
+        raise HTTPException(404, "用户不存在")
+    if not q:
+        raise HTTPException(400, "该账号未设置安全问题，请联系管理员重置密码")
+    return {"username": username, "question": q}
+
+
+@app.post("/api/auth/forgot/reset")
+def forgot_reset(payload: dict) -> dict:
+    """第二步：校验安全答案并重置密码（带失败限次）。"""
+    username = str(payload.get("username", "")).strip()
+    answer = str(payload.get("answer", "")).strip()
+    new_password = str(payload.get("new_password", ""))
+    if not username or not answer:
+        raise HTTPException(400, "请填写用户名和答案")
+    if len(new_password) < 6:
+        raise HTTPException(400, "新密码至少 6 位")
+
+    # 简单限次：同一用户名 10 分钟内最多试 5 次
+    now = time.time()
+    rec = _reset_attempts.get(username, {"n": 0, "until": 0})
+    if rec["until"] > now:
+        raise HTTPException(429, "尝试次数过多，请 10 分钟后再试")
+
+    if not auth.verify_security_answer(username, answer):
+        rec["n"] += 1
+        if rec["n"] >= RESET_MAX_TRIES:
+            rec = {"n": 0, "until": now + RESET_LOCK_SECONDS}
+        _reset_attempts[username] = rec
+        raise HTTPException(400, "答案不正确")
+
+    _reset_attempts.pop(username, None)
+    try:
+        auth.reset_password(username, new_password)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return {"message": "密码已重置，请用新密码登录"}
 
 
 @app.post("/api/auth/login")
@@ -85,6 +144,21 @@ def login(payload: dict) -> dict:
     return {"token": token, "user": user}
 
 
+@app.post("/api/auth/change-password")
+def change_password(payload: dict, user: dict = Depends(get_current_user)) -> dict:
+    """修改自己的密码：需校验旧密码。"""
+    old = str(payload.get("old_password", ""))
+    new = str(payload.get("new_password", ""))
+    if len(new) < 6:
+        raise HTTPException(400, "新密码至少 6 位")
+    if new == old:
+        raise HTTPException(400, "新密码不能与旧密码相同")
+    if not auth.authenticate(user["username"], old):
+        raise HTTPException(400, "旧密码不正确")
+    auth.update_user(user["id"], password=new)
+    return {"message": "密码已修改"}
+
+
 @app.post("/api/auth/logout")
 def logout(authorization: str | None = Header(default=None)) -> dict:
     if authorization and authorization.startswith("Bearer "):
@@ -94,7 +168,24 @@ def logout(authorization: str | None = Header(default=None)) -> dict:
 
 @app.get("/api/auth/me")
 def me(user: dict = Depends(get_current_user)) -> dict:
-    return user
+    out = dict(user)
+    try:
+        out["has_security_question"] = bool(auth.get_security_question(out["username"]))
+    except Exception:  # noqa: BLE001
+        out["has_security_question"] = False
+    return out
+
+
+@app.post("/api/auth/security-question")
+def set_security_question(payload: dict, user: dict = Depends(get_current_user)) -> dict:
+    """已登录用户设置/修改安全问题（用于将来找回密码）。"""
+    try:
+        auth.set_security_question(
+            user["id"], payload.get("question", ""), payload.get("answer", "")
+        )
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return {"message": "安全问题已保存"}
 
 
 @app.get("/api/me/preferences")
@@ -510,6 +601,39 @@ def _compare(a: dict, b: dict) -> dict:
     return {"summary": summary, "diffs": diffs}
 
 
+# 变化类型 → 风险等级（没有审查数据时的规则兜底）
+_CHANGE_SEVERITY = {"删除": "高", "修改": "中", "新增": "低"}
+_CHANGE_NOTE = {
+    "删除": "该条款在新版中消失，需确认是否为无意遗漏",
+    "新增": "新版新增该条款，需确认义务与责任是否可接受",
+    "修改": "条款正文有改动，需核对金额、期限、责任等关键要素",
+}
+
+
+def _enrich_diffs(result: dict, b_name: str) -> dict:
+    """给差异补风险等级与简述：优先用 B 合同最近一次审查的判定，退化时按规则推断。"""
+    sev_map: dict[str, str] = {}
+    try:
+        latest = auth.latest_review(b_name)
+        for j in (latest or {}).get("judgments", []):
+            if j.get("clause") and j.get("severity"):
+                sev_map[j["clause"]] = j["severity"]
+    except Exception:  # noqa: BLE001
+        sev_map = {}
+
+    for d in result.get("diffs", []):
+        if d["change"] == "相同":
+            d["severity"] = ""
+            d["note"] = ""
+            d["severity_from"] = ""
+            continue
+        sev = sev_map.get(d["clause"])
+        d["severity_from"] = "review" if sev else "rule"
+        d["severity"] = sev or _CHANGE_SEVERITY.get(d["change"], "中")
+        d["note"] = _CHANGE_NOTE.get(d["change"], "")
+    return result
+
+
 @app.get("/api/contracts")
 def list_contracts() -> dict:
     """返回示例合同列表。"""
@@ -742,8 +866,50 @@ async def compare_contracts(payload: dict, user: dict = Depends(get_current_user
     a = _extract_clauses(pa)
     b = _extract_clauses(pb)
     result = _compare(a, b)
+    result = _enrich_diffs(result, b_name)
     result.update({"a": a_name, "b": b_name})
     return result
+
+
+@app.post("/api/compare_upload")
+async def compare_upload(
+    a_name: str = Form(""),
+    b_name: str = Form(""),
+    a_file: UploadFile | None = File(None),
+    b_file: UploadFile | None = File(None),
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """对比两份合同：支持「样例库合同」与「上传文件」任意组合。"""
+    raw_root = config.RAW_DIR.resolve()
+    tmpdir = Path(tempfile.mkdtemp(prefix="cmp_"))
+
+    def _resolve(name: str, upload: UploadFile | None, tag: str) -> tuple[Path, str]:
+        if upload is not None and upload.filename:
+            suffix = Path(upload.filename).suffix.lower() or ".docx"
+            if suffix != ".docx":
+                raise HTTPException(400, "只支持 .docx 合同")
+            dst = tmpdir / f"{tag}{suffix}"
+            with dst.open("wb") as fh:
+                fh.write(upload.file.read())
+            return dst, f"{tag}（上传）"
+        if not name:
+            raise HTTPException(400, f"请为 {tag} 选择合同或上传文件")
+        p = (raw_root / name).resolve()
+        if not str(p).startswith(str(raw_root)) or not p.exists():
+            raise HTTPException(404, "合同不存在")
+        return p, name
+
+    try:
+        pa, a_label = _resolve(a_name, a_file, "A")
+        pb, b_label = _resolve(b_name, b_file, "B")
+        a = _extract_clauses(pa)
+        b = _extract_clauses(pb)
+        result = _compare(a, b)
+        result = _enrich_diffs(result, b_name if not b_file else "")
+        result.update({"a": a_label, "b": b_label})
+        return result
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
 
 
 def _review_context(name: str) -> str:

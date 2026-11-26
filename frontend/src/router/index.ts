@@ -24,6 +24,7 @@ const routes = [
           { path: '', redirect: '/me/overview' },
           { path: 'overview', component: () => import('../views/me/Overview.vue') },
           { path: 'reviews', component: () => import('../views/me/Reviews.vue') },
+          { path: 'reviews/:id', component: () => import('../views/me/ReviewDetail.vue') },
           { path: 'account', component: () => import('../views/me/Account.vue') },
         ],
       },

@@ -79,6 +79,11 @@ def init_db() -> None:
             c.execute("ALTER TABLE users ADD COLUMN last_login REAL NOT NULL DEFAULT 0")
         if "user_status" not in cols:
             c.execute("ALTER TABLE users ADD COLUMN user_status TEXT NOT NULL DEFAULT 'active'")
+        # 轻量迁移：安全问题（用于自助找回密码）
+        if "security_question" not in cols:
+            c.execute("ALTER TABLE users ADD COLUMN security_question TEXT NOT NULL DEFAULT ''")
+        if "security_answer_hash" not in cols:
+            c.execute("ALTER TABLE users ADD COLUMN security_answer_hash TEXT NOT NULL DEFAULT ''")
         # 轻量迁移：reviews 存判定明细（供 AI 对话回答"哪条高风险"）
         rcols = [r[1] for r in c.execute("PRAGMA table_info(reviews)").fetchall()]
         if "judgments" not in rcols:
@@ -223,20 +228,86 @@ def verify_password(password: str, stored: str) -> bool:
 
 
 # ---- 用户 ----
-def create_user(username: str, password: str, role: str = "user") -> dict:
+def create_user(
+    username: str,
+    password: str,
+    role: str = "user",
+    question: str = "",
+    answer: str = "",
+) -> dict:
     username = username.strip()
     if len(username) < 2 or len(password) < 6:
         raise ValueError("用户名至少 2 位、密码至少 6 位")
+    question = (question or "").strip()
+    answer = (answer or "").strip()
+    answer_hash = hash_password(answer.lower()) if question and answer else ""
     with _db() as c:
         try:
             cur = c.execute(
-                "INSERT INTO users(username, password_hash, role, created_at) VALUES(?,?,?,?)",
-                (username, hash_password(password), role, time.time()),
+                "INSERT INTO users(username, password_hash, role, created_at, security_question, security_answer_hash) "
+                "VALUES(?,?,?,?,?,?)",
+                (
+                    username,
+                    hash_password(password),
+                    role,
+                    time.time(),
+                    question if answer_hash else "",
+                    answer_hash,
+                ),
             )
         except sqlite3.IntegrityError as e:
             raise ValueError("用户名已存在") from e
         uid = cur.lastrowid
     return {"id": uid, "username": username, "role": role}
+
+
+def get_security_question(username: str) -> str | None:
+    """返回该用户设置的安全问题；用户不存在或无问题返回 None。"""
+    with _db() as c:
+        row = c.execute(
+            "SELECT security_question FROM users WHERE username=?", (username.strip(),)
+        ).fetchone()
+    return (row["security_question"] or "") if row else None
+
+
+def verify_security_answer(username: str, answer: str) -> bool:
+    with _db() as c:
+        row = c.execute(
+            "SELECT security_answer_hash FROM users WHERE username=?", (username.strip(),)
+        ).fetchone()
+    if not row or not row["security_answer_hash"]:
+        return False
+    return verify_password((answer or "").strip().lower(), row["security_answer_hash"])
+
+
+def reset_password(username: str, new_password: str) -> bool:
+    if len(new_password) < 6:
+        raise ValueError("新密码至少 6 位")
+    with _db() as c:
+        row = c.execute("SELECT id FROM users WHERE username=?", (username.strip(),)).fetchone()
+        if not row:
+            return False
+        c.execute(
+            "UPDATE users SET password_hash=? WHERE id=?",
+            (hash_password(new_password), row["id"]),
+        )
+        # 重置后清掉所有会话，强制重新登录
+        c.execute("DELETE FROM sessions WHERE user_id=?", (row["id"],))
+    return True
+
+
+def set_security_question(user_id: int, question: str, answer: str) -> bool:
+    """给已有账号补设安全问题（注册时没设置的老账号用）。"""
+    question = (question or "").strip()
+    answer = (answer or "").strip()
+    if not question or not answer:
+        raise ValueError("安全问题和答案都不能为空")
+    with _db() as c:
+        cur = c.execute(
+            "UPDATE users SET security_question=?, security_answer_hash=? WHERE id=?",
+            (question, hash_password(answer.lower()), user_id),
+        )
+        return cur.rowcount > 0
 
 
 def authenticate(username: str, password: str) -> dict | None:

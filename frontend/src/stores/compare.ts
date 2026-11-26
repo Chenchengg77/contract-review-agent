@@ -8,6 +8,8 @@ export const useCompareStore = defineStore('compare', {
     contracts: [] as string[],
     a: '',
     b: '',
+    aFile: null as File | null,
+    bFile: null as File | null,
     loading: false,
     progress: 0,
     stage: 0,
@@ -29,16 +31,18 @@ export const useCompareStore = defineStore('compare', {
       }
     },
     _tick() {
-      this.progress = Math.min(this.progress + 3, 92)
-      this.stage = this.progress < 25 ? 0 : this.progress < 55 ? 1 : this.progress < 80 ? 2 : 3
+      this.progress = Math.min(this.progress + 2.5, 92)
+      this.stage = this.progress < 22 ? 0 : this.progress < 48 ? 1 : this.progress < 74 ? 2 : 3
     },
     async run() {
       if (this.loading) return
-      if (!this.a || !this.b) {
-        this.error = '请分别选择 A、B 两份合同'
+      const hasA = !!this.aFile || !!this.a
+      const hasB = !!this.bFile || !!this.b
+      if (!hasA || !hasB) {
+        this.error = '请分别为 A、B 选择合同或上传文件'
         return
       }
-      if (this.a === this.b) {
+      if (!this.aFile && !this.bFile && this.a === this.b) {
         this.error = 'A 和 B 不能是同一份合同'
         return
       }
@@ -47,11 +51,16 @@ export const useCompareStore = defineStore('compare', {
       this.error = ''
       this.progress = 0
       this.stage = 0
-      timer = setInterval(() => this._tick(), 250)
+      timer = setInterval(() => this._tick(), 260)
       try {
-        const { data } = await api.post('/compare', { a: this.a, b: this.b })
+        const fd = new FormData()
+        if (this.aFile) fd.append('a_file', this.aFile)
+        else fd.append('a_name', this.a)
+        if (this.bFile) fd.append('b_file', this.bFile)
+        else fd.append('b_name', this.b)
+        const { data } = await api.post('/compare_upload', fd)
         this.progress = 100
-        this.stage = 3
+        this.stage = 4
         this.result = data
       } catch (e: any) {
         this.error = e.response?.data?.detail || '对比失败'
@@ -60,6 +69,12 @@ export const useCompareStore = defineStore('compare', {
         timer = null
         this.loading = false
       }
+    },
+    reset() {
+      this.result = null
+      this.error = ''
+      this.progress = 0
+      this.stage = 0
     },
   },
 })

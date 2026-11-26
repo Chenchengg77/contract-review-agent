@@ -4,13 +4,86 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '../stores/user'
 import DocParticles from '../components/DocParticles.vue'
+import api from '../api'
 
 const router = useRouter()
 const store = useUserStore()
 const mode = ref<'login' | 'register'>('login')
 const username = ref('')
 const password = ref('')
+// 注册时的安全问题（可选，用于找回密码）
+const secQuestion = ref('')
+const secAnswer = ref('')
 const loading = ref(false)
+
+// 找回密码
+const forgotOpen = ref(false)
+const fStep = ref(1)
+const fUsername = ref('')
+const fQuestion = ref('')
+const fAnswer = ref('')
+const fNew = ref('')
+const fConfirm = ref('')
+const forgotLoading = ref(false)
+
+function openForgot() {
+  forgotOpen.value = true
+  fStep.value = 1
+  fUsername.value = username.value
+  fQuestion.value = ''
+  fAnswer.value = ''
+  fNew.value = ''
+  fConfirm.value = ''
+}
+
+async function fetchQuestion() {
+  if (!fUsername.value.trim()) {
+    ElMessage.warning('请输入用户名')
+    return
+  }
+  forgotLoading.value = true
+  try {
+    const { data } = await api.post('/auth/forgot/question', { username: fUsername.value.trim() })
+    fQuestion.value = data.question
+    fStep.value = 2
+  } catch (e: any) {
+    ElMessage.error(e.response?.data?.detail || '查询失败')
+  } finally {
+    forgotLoading.value = false
+  }
+}
+
+async function doReset() {
+  if (!fAnswer.value.trim()) {
+    ElMessage.warning('请输入答案')
+    return
+  }
+  if (fNew.value.length < 6) {
+    ElMessage.warning('新密码至少 6 位')
+    return
+  }
+  if (fNew.value !== fConfirm.value) {
+    ElMessage.warning('两次输入的新密码不一致')
+    return
+  }
+  forgotLoading.value = true
+  try {
+    await api.post('/auth/forgot/reset', {
+      username: fUsername.value.trim(),
+      answer: fAnswer.value.trim(),
+      new_password: fNew.value,
+    })
+    ElMessage.success('密码已重置，请用新密码登录')
+    forgotOpen.value = false
+    username.value = fUsername.value.trim()
+    password.value = ''
+    mode.value = 'login'
+  } catch (e: any) {
+    ElMessage.error(e.response?.data?.detail || '重置失败')
+  } finally {
+    forgotLoading.value = false
+  }
+}
 
 const cards = [
   { title: '风险标注', desc: '合规 / 偏离 / 缺失 / 冲突', icon: 'shield' },
@@ -53,10 +126,15 @@ async function submit() {
       return
     }
 
-    await store.register(username.value, password.value)
+    await store.register(username.value, password.value, {
+      security_question: secQuestion.value,
+      security_answer: secAnswer.value,
+    })
     store.logout()
     mode.value = 'login'
     password.value = ''
+    secQuestion.value = ''
+    secAnswer.value = ''
     ElMessage.success('注册成功，请用新账号登录')
   } catch (e: any) {
     ElMessage.error(e.response?.data?.detail || '操作失败')
@@ -173,6 +251,28 @@ async function demoLogin() {
             </div>
           </div>
 
+          <!-- 注册时可选：安全问题（用于找回密码） -->
+          <template v-if="mode === 'register'">
+            <div class="field">
+              <label>安全问题 <span class="opt">选填 · 用于找回密码</span></label>
+              <div class="input-shell">
+                <el-input
+                  v-model="secQuestion"
+                  placeholder="例：我的第一份合同编号"
+                  size="large"
+                />
+                <span class="streak"></span>
+              </div>
+            </div>
+            <div class="field">
+              <label>答案</label>
+              <div class="input-shell">
+                <el-input v-model="secAnswer" placeholder="记住这个答案，忘记了可自助重置" size="large" />
+                <span class="streak"></span>
+              </div>
+            </div>
+          </template>
+
           <button class="submit" :disabled="loading" @click="submit">
             <span class="submit-label">{{ loading ? '处理中…' : mode === 'login' ? '登录' : '注册' }}</span>
             <span
@@ -182,6 +282,10 @@ async function demoLogin() {
               :style="{ '--dx': p.dx + 'px', '--dy': p.dy + 'px', background: p.c }"
             ></span>
           </button>
+
+          <div class="forgot-row">
+            <button class="forgot" @click="openForgot">忘记密码？</button>
+          </div>
 
           <!-- 演示账号气泡 -->
           <div class="demo-bubble">
@@ -195,6 +299,43 @@ async function demoLogin() {
         </div>
       </section>
     </div>
+
+    <!-- 找回密码 -->
+    <el-dialog v-model="forgotOpen" title="找回密码" width="420px" append-to-body>
+      <div v-if="fStep === 1" class="fg">
+        <p class="fg-tip">输入注册时的用户名，我们会显示你设置的安全问题。</p>
+        <el-input v-model="fUsername" placeholder="用户名" size="large" @keyup.enter="fetchQuestion" />
+      </div>
+      <div v-else class="fg">
+        <div class="fg-q">
+          <span class="fg-label">安全问题</span>
+          <span class="fg-text">{{ fQuestion }}</span>
+        </div>
+        <el-input v-model="fAnswer" placeholder="答案" size="large" />
+        <el-input
+          v-model="fNew"
+          type="password"
+          placeholder="新密码（至少 6 位）"
+          size="large"
+          show-password
+          style="margin-top: 10px"
+        />
+        <el-input
+          v-model="fConfirm"
+          type="password"
+          placeholder="确认新密码"
+          size="large"
+          show-password
+          style="margin-top: 10px"
+        />
+      </div>
+      <template #footer>
+        <el-button @click="forgotOpen = false">取消</el-button>
+        <el-button type="primary" :loading="forgotLoading" @click="fStep === 1 ? fetchQuestion() : doReset()">
+          {{ fStep === 1 ? '下一步' : '重置密码' }}
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -692,6 +833,52 @@ async function demoLogin() {
   color: #94a3b8;
   margin-bottom: 7px;
   letter-spacing: 0.5px;
+}
+.opt {
+  color: #64748b;
+  font-size: 10.5px;
+  margin-left: 4px;
+}
+/* 忘记密码 */
+.forgot-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+.forgot {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 11.5px;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.forgot:hover {
+  color: #7dd3fc;
+}
+.fg-tip {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0 0 12px;
+  line-height: 1.7;
+}
+.fg-q {
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.fg-label {
+  font-size: 11px;
+  color: #94a3b8;
+  display: block;
+  margin-bottom: 4px;
+}
+.fg-text {
+  font-size: 13px;
+  color: #334155;
 }
 .input-shell {
   position: relative;

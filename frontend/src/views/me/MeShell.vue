@@ -87,24 +87,34 @@ const active = computed(() => route.path)
 }
 .me-tabs {
   display: flex;
-  gap: 26px;
+  gap: 8px;
+  padding-bottom: 14px;
 }
 .me-tab {
-  position: relative;
-  padding: 0 0 16px;
-  font-size: 13.5px;
-  color: #7a746a;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid #e6e2da;
+  background: #fff;
+  font-size: 12.5px;
+  color: #6b6f76;
   text-decoration: none;
-  letter-spacing: 0.5px;
-  border-bottom: 2px solid transparent;
-  transition: color 0.15s;
+  letter-spacing: 0.4px;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    color 0.2s;
 }
 .me-tab:hover {
-  color: #14161a;
+  background: #f7fafd;
+  border-color: #d6e2f7;
 }
 .me-tab.active {
-  color: #14161a;
-  border-bottom-color: #14161a;
+  background: #eef4fc;
+  border-color: #c7d9f8;
+  color: #1e4fa8;
+  font-weight: 600;
 }
 /* 白色纸面：压在个人中心条下面 */
 .me-sheet {

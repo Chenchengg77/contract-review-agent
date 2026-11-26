@@ -23,8 +23,12 @@ export const useUserStore = defineStore('user', {
       this.user = data.user
       localStorage.setItem('token', data.token)
     },
-    async register(username: string, password: string) {
-      const { data } = await api.post('/auth/register', { username, password })
+    async register(
+      username: string,
+      password: string,
+      extra: { security_question?: string; security_answer?: string } = {}
+    ) {
+      const { data } = await api.post('/auth/register', { username, password, ...extra })
       this.token = data.token
       this.user = data.user
       localStorage.setItem('token', data.token)

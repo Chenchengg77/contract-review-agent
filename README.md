@@ -88,6 +88,25 @@ docker compose up
 >
 > **版本记录**：修复「条款正文只取到标题」的 bug 后，verdict 准确率 85.36% → **91.07%**、severity 88.34% → **94.54%**（详见 `docs/failures.md` 第 6 条）。
 
+## 测试
+
+```bash
+python -m pytest        # 37 个用例，约 5 秒
+```
+
+覆盖范围（`tests/`）：
+
+| 文件 | 覆盖 |
+|---|---|
+| `test_auth.py` | 注册 / 登录 / 禁用账号 / 修改密码 / 找回密码（安全问题、失败限次） |
+| `test_permissions.py` | 未登录 401、普通用户访问管理端 403、管理员 200 |
+| `test_reviews.py` | 记录隔离、详情权限、删除、健康检查、个人统计结构 |
+| `test_compare_logic.py` | 对比逻辑的增/删/改/同判定 + 风险等级规则 |
+| `test_templates.py` | 静态页、合同列表、模板列表 |
+
+> 测试用**临时 SQLite**（`conftest.py` 里把 `DB_PATH` 指到临时目录），不会动 `data/app.db`；也不调用大模型。
+> CI：`.github/workflows/tests.yml`，push 到 main 自动跑。
+
 ## 项目结构
 
 ```
