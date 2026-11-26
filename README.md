@@ -1,137 +1,404 @@
 # 合同智能审查 Agent（Contract Review Agent）
 
-> 一个前后端分离的合同审查平台：**上传合同 → 条款抽取 → 风险判定 → 人工确认 → 审查报告**，还带**基于合同的 AI 问答**和**合同对比**。
+> 上传合同 → 自动识别 **13 类核心条款** → **四态风险判定**（合规 / 偏离 / 缺失 / 冲突）→ 给出**可复制的修订建议**；
+> 附带**锚定合同原文的 AI 问答**（能拒答）、**合同对比**、**管理端看板与运维**。
 
-[![Python 3.12](https://img.shields.io/badge/Python-3.12-blue)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.16x-009688)](https://fastapi.tiangolo.com/)
-[![License MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Vue](https://img.shields.io/badge/Frontend-Vue%203-42B883?logo=vuedotjs&logoColor=white)](https://vuejs.org/)
+[![Tests](https://img.shields.io/badge/tests-37%20passed-2ea44f)](tests/)
+[![CI](https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?logo=githubactions&logoColor=white)](.github/workflows/tests.yml)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+
+📄 [架构设计](docs/architecture.md) · 🎬 [5 分钟演示脚本](docs/DEMO.md) · 🐞 [错例库](docs/failures.md) · 🎤 [面试速记](docs/interview-cheatsheet.md)
 
 ---
 
-## 功能模块
+## 目录
 
-| 模块 | 说明 |
+- [这是什么](#这是什么)
+- [功能矩阵](#功能矩阵)
+- [架构](#架构)
+- [技术栈](#技术栈)
+- [核心设计（为什么这么做）](#核心设计为什么这么做)
+- [评测结果](#评测结果)
+- [测试与 CI](#测试与-ci)
+- [快速开始](#快速开始)
+- [配置](#配置)
+- [API 一览](#api-一览)
+- [项目结构](#项目结构)
+- [安全与边界](#安全与边界)
+- [已知局限（诚实记录）](#已知局限诚实记录)
+- [Roadmap](#roadmap)
+- [数据来源与致谢](#数据来源与致谢)
+- [License](#license)
+
+---
+
+## 这是什么
+
+一个**前后端分离**的合同审查平台，面向**商务合同**的初审场景。
+
+它解决的不是「让 AI 聊合同」，而是三件具体的事：
+
+1. **该有的条款有没有** —— 13 类条款逐条检查，缺失也算风险
+2. **有问题的条款错在哪** —— 引用条款号和原文，可核对
+3. **该怎么改** —— 给出修订文本，可直接复制
+
+> 定位是**初审辅助**，不替代律师；所有结论都标注依据，最终由人确认。
+
+---
+
+## 功能矩阵
+
+### 用户端
+
+| 模块 | 能力 |
 |---|---|
-| 🔍 **合同审查** | 上传 DOCX → 抽 13 类条款 → 风险判定（合规/偏离/缺失/冲突）→ 报告 |
-| 💬 **AI 对话** | 基于合同原文的 RAG 问答，带条款引用，**能拒答**（防幻觉） |
-| ⚖️ **合同对比** | 选两份合同 → 逐条比对差异（修改/新增/删除/相同） |
-| 📊 **评估数据** | 31 份合同 / 403 条评估集，指标可复现 |
-| 📖 **关于** | 项目介绍与技术说明 |
+| 🔍 **合同审查** | 上传 `.docx` 或选模板 → 四阶段进度 → 13 类条款判定 → 可复制修订建议 |
+| 💬 **AI 对话** | 合同问答（RAG，带条款引用、可拒答）/ 法律问答 / 历史会话 |
+| ⚖️ **合同对比** | 双卡选择（样例或上传）→ 逐条 Diff → 统计看板 → 风险摘要 → 导出报告 |
+| 📚 **合同模板** | 33 份示范文本，按类型筛选、预览（原样渲染 DOCX）、下载、上传自定义 |
+| 📊 **评估数据** | 31 份 / 403 条金标指标、版本对比、前置拦截对比 |
+| 🏠 **首页** | 产品优势、与「直接用 AI 聊天」的差异、前后对比、能力表 |
+
+### 个人中心
+
+| 模块 | 能力 |
+|---|---|
+| 📈 **概览** | 审查指标、合同类型分布（ECharts）、风险构成、按类型的风险画像 |
+| 📋 **我的审查** | 多维度筛选、风险标签、分页、**报告详情页** |
+| 👤 **账户** | 修改密码、设置安全问题、退出确认 |
+
+### 管理端
+
+| 模块 | 能力 |
+|---|---|
+| 📊 **看板** | 5 指标（核心指标渐变强调）、近 7 天趋势、类型分布、风险构成（ECharts） |
+| 👥 **用户管理** | 搜索 / 角色筛选 / 新增 / 编辑 / 启用禁用 / 批量启停 / 重置密码 |
+| 📋 **审查记录** | 多维度筛选、报告抽屉、批量删除、导出 CSV、查看原合同 |
+| 🛠️ **系统运维** | 健康检查（服务依赖 + 环形成功率）、运行时配置、失败记录与重试、演示工具 |
+
+---
 
 ## 架构
 
 ```mermaid
 flowchart LR
-    A[合同 .docx] --> B[parser<br/>解析 + 条款号]
-    B --> C[extract<br/>LLM 抽取 13 类条款<br/>+ 原文可搜校验]
-    C --> D[assess<br/>风险判定<br/>规则层 + LLM 语义]
-    D --> E{有高风险?}
-    E -- 是 --> F[confirm<br/>人工确认 interrupt]
-    E -- 否 --> G[report<br/>审查报告]
-    F --> G
+    A[合同 .docx] --> B["parser<br/>解析 + 条款号"]
+    B --> C["extract<br/>LLM 抽取 13 类条款<br/>证据必须在原文可搜到"]
+    C --> D["assess<br/>规则层 + 语义层判定"]
+    D --> E["revision<br/>偏离/冲突生成修订建议"]
+    E --> F["报告<br/>+ 落库 judgments"]
 
-    B --> H[retrieve<br/>BM25 检索]
-    H --> I[qa<br/>合同问答 RAG<br/>带引用 + 拒答]
+    B --> G["retrieve<br/>BM25 检索"]
+    G --> H["guard<br/>前置护栏：阈值 + 意图分类"]
+    H --> I["qa<br/>RAG 问答<br/>带引用 / 拒答"]
 ```
 
-## 亮点
+更细的分层图、时序图、护栏决策、数据模型见 **[docs/architecture.md](docs/architecture.md)**。
 
-- **评估驱动**：403 条人工评估集，所有数字可复现（`python scripts/evaluate.py`）
-- **防幻觉**：抽取证据必须「原文可搜」；问答时合同里没有的信息会**直接拒答**
-- **人工确认闭环**：高风险条款用 LangGraph `interrupt` 暂停，人批准后才进报告，支持断点续跑
-- **四态风险判定**：不只判「有/无」，还能判「违约金超标 → 冲突」「责任上限合理 → 合规」
-- **成本透明**：单份合同审查约 2 秒、成本约 1 分钱
+---
+
+## 技术栈
+
+| 层 | 选型 |
+|---|---|
+| **后端** | Python 3.12 · FastAPI · Uvicorn · SQLite（轻量迁移） |
+| **前端** | Vue 3 · TypeScript · Vite · Pinia · Vue Router · Element Plus · ECharts · docx-preview |
+| **AI** | DeepSeek（OpenAI 兼容 SDK）· 自研 RAG（BM25 + 阈值 + 拒答）· 前置护栏 |
+| **工程** | pytest（37 用例）· GitHub Actions · Docker 多阶段构建 · Render 部署 |
+
+---
+
+## 核心设计（为什么这么做）
+
+| 设计 | 做法 | 为什么 |
+|---|---|---|
+| **防编造** | 抽取的 `evidence` 必须能在原文中搜到，否则丢弃 | 模型会「造」不存在的条款 |
+| **四态判定** | 不止 有/无，还判「偏离 / 缺失 / 冲突」 | 「违约金超标」是冲突，不是简单的有或无 |
+| **双层判定** | playbook 规则层 + LLM 语义层 | 规则稳定可解释，语义覆盖边界 |
+| **问答拒答** | 检索最高分低于阈值 → 直接说没找到 | 宁可说不知道，也不猜 |
+| **前置护栏** | 阈值 + 意图分类，越界不调模型 | 防越界回答，也省成本 |
+| **可追溯** | 每条判定带 `clause_no` + 原文片段 | 结果要能被人工核对 |
+| **可评测** | 403 条人工金标 + 可复跑脚本 | 没有数字就没有迭代方向 |
+| **运行时配置** | 护栏开关 / 阈值 / 超时存 DB，改完即生效 | 调整策略不用重新部署 |
+| **失败可重试** | 失败记录落库，管理端一键重试 | 大模型偶发超时是常态 |
+
+---
+
+## 评测结果
+
+`results/eval_v3.json` — **31 份合同 / 403 条人工金标**
+
+| 层 | 指标 | 数值 |
+|---|---|---|
+| 条款抽取 | 准确率 | **95.53%** |
+| | F1 | **92.57%**（P 94.4% / R 91.5%） |
+| 风险判定 | verdict 准确率 | **91.07%** |
+| | severity 准确率 | **94.54%** |
+| 冲突判定（填充样本） | 准确率 | **100%**（4/4） |
+
+### 版本记录：修一个 bug，涨 5.7 个点
+
+| 指标 | 修复前 | 修复后 | 变化 |
+|---|---|---|---|
+| 判定准确率 | 85.36% | **91.07%** | **+5.71%** |
+| 严重度准确率 | 88.34% | **94.54%** | **+6.20%** |
+
+> 原因：取条款正文时只取了标题行，标题后的正文段落没被收进来。修复后按「主条款边界」收集正文，并在目录重复时取最长的一条。
+> 完整 rca 见 [docs/failures.md](docs/failures.md) 第 6 条；修复前后对比可在站内「评估数据」页查看。
+
+### 复跑
+
+```bash
+python scripts/evaluate.py        # 输出上面这张表
+```
+
+---
+
+## 测试与 CI
+
+```bash
+python -m pytest        # 37 passed in ~5s
+```
+
+| 文件 | 覆盖 |
+|---|---|
+| `test_auth.py` | 注册 / 登录 / 禁用 / 改密 / 找回密码（安全问题、失败限次） |
+| `test_permissions.py` | 未登录 401、普通用户访问管理端 403、管理员 200 |
+| `test_reviews.py` | 记录隔离、详情越权、删除、健康检查、统计结构 |
+| `test_compare_logic.py` | 对比的增/删/改/同判定 + 风险等级规则 |
+| `test_templates.py` | 静态页、合同列表、模板列表 |
+
+- 测试用**临时 SQLite**（`conftest.py` 重定向 `DB_PATH`），不碰 `data/app.db`，也不调用大模型
+- CI：[`.github/workflows/tests.yml`](.github/workflows/tests.yml)，push 到 main 自动跑
+
+---
 
 ## 快速开始
 
+### 方式一：本地 venv（推荐）
+
 ```bash
-# 1) 装依赖
 python -m venv .venv
-.venv\Scripts\Activate.ps1          # Windows
+.venv\Scripts\Activate.ps1        # Windows
+# source .venv/bin/activate       # macOS / Linux
+
 pip install -r requirements.txt
+cp .env.example .env              # 填入 DEEPSEEK_API_KEY
 
-# 2) 配置密钥
-cp .env.example .env                # 填入 DEEPSEEK_API_KEY
-
-# 3) 启动后端（同时托管前端）
 python -m uvicorn api:app --host 127.0.0.1 --port 8000
 ```
 
-浏览器打开 **http://127.0.0.1:8000** 即可使用全部模块。
+打开 **http://127.0.0.1:8000**，用 `admin / admin123` 登录。
 
-也可以命令行跑：
-
-```bash
-python scripts/demo.py                        # 展示完整审查过程
-python scripts/review.py 合同文件名.docx       # 审查任意合同
-python scripts/evaluate.py                    # 跑评估，出分数表
-```
-
-### Docker
+### 方式二：Docker
 
 ```bash
 cp .env.example .env
 docker compose up
 ```
 
-## 评估结果（results/eval_v3.json，31 份合同 / 403 条）
+### 方式三：一键体验
 
-| 层 | 指标 | 数值 |
-|---|---|---|
-| 条款抽取 | 准确率 | **95.53%** |
-| | F1 | **92.57%**（precision 94.4% / recall 91.5%） |
-| 风险判定 | verdict 准确率 | **91.07%** |
-| | severity 准确率 | **94.54%** |
-| 冲突判定（填充样本） | 准确率 | **100%**（4 处冲突全判对） |
+登录页点「**一键体验 Demo**」，或直接点「查看演示账号」查看可用账号。
 
-> 说明：verdict 准确率（91.07%）仍略低于抽取（95.53%），是因为 gold 集的「偏离/缺失」是规则标注的，而语义判定更细（如「空白条款算缺失」），两者在边界上有分歧——这是**评估标准变严**，不是系统变差。
->
-> **版本记录**：修复「条款正文只取到标题」的 bug 后，verdict 准确率 85.36% → **91.07%**、severity 88.34% → **94.54%**（详见 `docs/failures.md` 第 6 条）。
-
-## 测试
+### 命令行
 
 ```bash
-python -m pytest        # 37 个用例，约 5 秒
+python scripts/demo.py                     # 完整审查过程演示
+python scripts/review.py 合同.docx         # 审查任意合同
+python scripts/evaluate.py                 # 跑评测出分数
+python scripts/seed_demo.py                # 造演示数据
 ```
 
-覆盖范围（`tests/`）：
+---
 
-| 文件 | 覆盖 |
-|---|---|
-| `test_auth.py` | 注册 / 登录 / 禁用账号 / 修改密码 / 找回密码（安全问题、失败限次） |
-| `test_permissions.py` | 未登录 401、普通用户访问管理端 403、管理员 200 |
-| `test_reviews.py` | 记录隔离、详情权限、删除、健康检查、个人统计结构 |
-| `test_compare_logic.py` | 对比逻辑的增/删/改/同判定 + 风险等级规则 |
-| `test_templates.py` | 静态页、合同列表、模板列表 |
+## 配置
 
-> 测试用**临时 SQLite**（`conftest.py` 里把 `DB_PATH` 指到临时目录），不会动 `data/app.db`；也不调用大模型。
-> CI：`.github/workflows/tests.yml`，push 到 main 自动跑。
+| 变量 | 必填 | 说明 |
+|---|---|---|
+| `DEEPSEEK_API_KEY` | ✅ | 大模型密钥 |
+| `DEEPSEEK_BASE_URL` | | 默认 `https://api.deepseek.com` |
+| `MODEL` | | 默认 `deepseek-chat` |
+| `EMBEDDING_API_KEY` / `EMBEDDING_BASE_URL` | | 可选，用 API 向量服务时填 |
+
+**运行时配置**（无需重启，管理端 → 系统运维）：
+
+| 配置 | 默认 | 说明 |
+|---|---|---|
+| `guard_on` | 开启 | 前置拦截开关（关闭可用来越界对比） |
+| `guard_low` | 5.0 | 检索分数低于此值直接拒答 |
+| `guard_high` | 8.0 | 高于此值直接放行；灰区走意图分类 |
+| `review_timeout` | 180s | 单份审查超时（改成 0.5s 可制造真实故障） |
+
+---
+
+## API 一览
+
+<details>
+<summary>展开全部接口（40 个）</summary>
+
+**认证**
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| POST | `/api/auth/register` | 注册（可选安全问题） |
+| POST | `/api/auth/login` | 登录（禁用账号返回 403） |
+| POST | `/api/auth/logout` | 退出 |
+| GET | `/api/auth/me` | 当前用户（含 `has_security_question`） |
+| POST | `/api/auth/change-password` | 修改密码（校验旧密码） |
+| POST | `/api/auth/forgot/question` | 找回密码：取安全问题 |
+| POST | `/api/auth/forgot/reset` | 找回密码：校验答案并重置（限次） |
+| POST | `/api/auth/security-question` | 补设安全问题 |
+
+**审查 / 对话 / 对比**
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| POST | `/api/review` | 上传合同审查 |
+| POST | `/api/review_sample` | 审查示例合同 |
+| GET | `/api/contracts` | 示例合同列表 |
+| GET | `/api/clause_text` | 取条款原文 |
+| GET | `/api/contract_text` | 取合同原文（管理端） |
+| POST | `/api/chat` · `/api/chat_stream` | 合同问答（普通 / SSE） |
+| POST | `/api/law_chat` · `/api/law_chat_stream` | 法律问答 |
+| POST | `/api/compare` | 对比两份样例合同 |
+| POST | `/api/compare_upload` | 对比（支持上传混合） |
+
+**个人中心**
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/api/reviews` | 我的审查记录（管理员看全部） |
+| GET | `/api/reviews/{id}` | 单条详情（含判定明细） |
+| GET/PUT | `/api/me/preferences` | 审查偏好 |
+| GET | `/api/me/stats` | 个人统计 + 分类型画像 |
+
+**模板 / 评估**
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/api/templates` | 模板列表 |
+| GET | `/api/templates/preview` | 模板大纲 |
+| GET | `/api/templates/download` | 下载 .docx |
+| POST | `/api/templates/upload` | 上传自定义模板 |
+| GET | `/api/eval` | 评测数据（summary / before / cases / qa_cases） |
+
+**管理端**
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/api/admin/stats` | 聚合统计 |
+| GET | `/api/admin/health` | 健康检查（含服务依赖） |
+| GET | `/api/admin/failures` | 失败记录 |
+| POST | `/api/admin/retry/{id}` | 重试失败记录 |
+| GET/PUT | `/api/admin/settings` | 运行时配置 |
+| POST | `/api/admin/settings/reset` | 恢复默认配置 |
+| POST | `/api/admin/demo/failure` | 注入模拟故障（演示） |
+| POST | `/api/admin/failures/clear` | 清理演示数据（保留真实） |
+| GET/POST | `/api/admin/users` | 用户列表 / 新建 |
+| PATCH | `/api/admin/users/{id}` | 编辑（角色 / 重置密码） |
+| PATCH | `/api/admin/users/{id}/status` | 启用 / 禁用 |
+| DELETE | `/api/admin/users/{id}` | 删除 |
+| DELETE | `/api/reviews/{id}` | 删除审查记录 |
+
+</details>
+
+---
 
 ## 项目结构
 
 ```
 contract-review-agent/
-├── api.py          # FastAPI 后端（审查 / 对话 / 对比 / 评估 接口）
-├── src/            # parser / extract / retrieve / assess / report / judge / qa / workflow
-├── static/         # 前端：index.html + app.js + images/
-├── scripts/        # demo.py / review.py / evaluate.py
+├── api.py                    # FastAPI 入口（40 个接口）
+├── config.py                 # 唯一配置入口
+├── src/
+│   ├── parser.py             # DOCX 解析（段落 + 表格 + 条款号）
+│   ├── extract.py            # LLM 抽取 13 类条款
+│   ├── assess.py             # 规则 + 语义双层判定
+│   ├── revision.py           # 修订建议生成
+│   ├── retrieve.py           # BM25 检索
+│   ├── guard.py              # 前置护栏
+│   ├── qa.py / law_qa.py     # 合同问答 / 法律问答
+│   ├── judge.py              # 冲突判定
+│   ├── report.py             # 报告生成
+│   ├── workflow.py           # 流水线编排
+│   └── auth.py               # 用户 / 会话 / 审查记录 / 配置
+├── frontend/                 # Vue 3 + TS + Vite
+│   └── src/
+│       ├── views/            # 首页/审查/对话/对比/模板/评估/关于
+│       ├── views/admin/      # 看板 / 用户 / 记录 / 运维
+│       ├── views/me/         # 概览 / 我的审查 / 报告详情 / 账户
+│       ├── layouts/          # 用户端顶栏 / 管理端侧栏
+│       ├── components/       # 页脚 / 粒子 / 落叶动效
+│       └── stores/           # user / review / compare
 ├── data/
-│   ├── raw/        # 31 份合同（市场监管总局示范文本库 + 填充示例）
-│   ├── playbook/   # 13 类标准条款（must_contain / red_flags）
-│   └── eval/       # gold.json 评估集（403 条）
-├── docs/           # design.md / failures.md / interview.md
-├── results/        # 版本化评估结果 eval_vN.json
+│   ├── raw/                  # 33 份合同（示范文本 + 填充示例 + 自定义）
+│   ├── playbook/             # 13 类标准条款（must_contain / red_flags）
+│   ├── knowledge/            # 法条知识库
+│   └── eval/                 # 403 条金标
+├── docs/
+│   ├── architecture.md       # 架构与关键设计（mermaid）
+│   ├── DEMO.md               # 5 分钟演示脚本
+│   ├── failures.md           # 错例库（6 个真实 bug）
+│   ├── design.md             # 设计过程
+│   └── interview-cheatsheet.md
+├── tests/                    # 37 个 pytest 用例
+├── scripts/                  # demo / review / evaluate / seed_demo
+├── results/                  # 版本化评测结果
+├── .github/workflows/        # CI
 ├── Dockerfile / docker-compose.yml
-└── config.py       # 唯一配置入口
+└── pytest.ini
 ```
+
+---
+
+## 安全与边界
+
+| 项 | 做法 |
+|---|---|
+| 密码 | PBKDF2-SHA256（20 万次迭代），不存明文 |
+| 安全问题答案 | 同样 PBKDF2 哈希，比对时忽略大小写 |
+| 找回密码 | 同一用户名 10 分钟最多 5 次，超出锁定 |
+| 会话 | token 存 SQLite，禁用账号 / 重置密码时**清空全部会话** |
+| 权限 | 普通用户访问管理端一律 403；管理员不能删除/禁用自己，也不能删最后一个管理员 |
+| 路径穿越 | 文件名取 `Path(name).name`，并校验必须落在 `data/raw` 内 |
+| 越界提问 | 前置护栏拦截，不调用大模型 |
+| 密钥 | `.env` 在 `.gitignore` 中，仓库不含任何密钥 |
+
+---
 
 ## 已知局限（诚实记录）
 
-- **适用范围**：13 类条款面向**商务合同**（买卖 / 租赁 / 承揽 / 服务 / 建设）；劳动合同、股权/投资合同等类型**不适用**——这些合同缺少「付款 / 交付 / 验收 / 发票」等条款是正常的，系统会误报「缺失」。要覆盖更多类型，需按合同类型切换 playbook；
-- 大部分数据为**空白示范文本**，仅 2 份为填充示例；暂无大量「合规/冲突」真实样本；
-- 风险判定的语义层依赖 LLM，成本略高于纯规则层；
-- DOCX 页码为估算（靠显式分页符），非精确页码。
+- **适用范围**：13 类条款面向**商务合同**（买卖 / 租赁 / 承揽 / 服务 / 建设）；劳动合同、股权/投资合同**不适用**——这些合同缺少「付款/交付/验收/发票」是正常的，系统会误报「缺失」
+- **样本**：多为空白示范文本，仅 2 份填充示例；缺少大量真实的「合规/冲突」样本
+- **语义判定依赖 LLM**：成本高于纯规则层；模型波动会影响稳定性
+- **审查是同步请求**（约 16 秒）：未做任务队列，高峰期易超时
+- **API 无全局限流**：仅找回密码有失败限次，上生产需加按用户/IP 限流
+- **SQLite 单机**：并发写有瓶颈，且容器重启数据会回滚
+- **页码为估算**：靠显式分页符推断，非精确页码
+- **未做移动端专项适配**：只做了基础响应式
 
-## 免责声明
+---
 
-本项目仅为技术演示，生成内容**不构成法律意见**，不替代律师或专业人士的审查。
+## Roadmap
+
+| 优先级 | 事项 |
+|---|---|
+| P0 | 审查异步化（任务队列 + 轮询/SSE） |
+| P0 | 线上演示数据与持久化存储（换 PostgreSQL） |
+| P1 | API 全局限流（按用户 / IP） |
+| P1 | 检索消融实验（纯 BM25 / 加向量 / 加重排 的对比） |
+| P2 | 报告导出 PDF / Word |
+| P2 | 移动端适配 |
+
+---
+
+## 数据来源与致谢
+
+- 合同范本来自**国家市场监督管理总局**公布的示范文本（GF 系列），以及自建的填充示例
+- 评测金标由人工标注，仅用于本项目评测
+- 本项目为**技术演示**，不构成法律意见，不替代律师或专业人士
+
+---
+
+## License
+
+[MIT](LICENSE)
