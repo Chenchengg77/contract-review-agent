@@ -69,11 +69,11 @@ async function demoLogin() {
   fireBurst()
   loading.value = true
   try {
-    await store.login('demo01', 'demo123456')
+    await store.login('demo', 'demo123456')
     ElMessage.success('已进入演示账号')
     router.push('/home')
   } catch {
-    ElMessage.error('演示账号不存在，请用 admin / admin123')
+    ElMessage.error('演示账号不可用，请用 admin / admin123')
   } finally {
     loading.value = false
   }
@@ -189,7 +189,7 @@ async function demoLogin() {
             <div class="bubble">
               <div class="bubble-arrow"></div>
               <div class="bubble-row"><span>管理员</span>admin / admin123</div>
-              <div class="bubble-row"><span>演示用户</span>demo01 / demo123456</div>
+              <div class="bubble-row"><span>演示用户</span>demo / demo123456</div>
             </div>
           </div>
         </div>

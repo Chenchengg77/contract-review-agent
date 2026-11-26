@@ -38,6 +38,12 @@ try:
         auth.create_user("admin", "admin123", role="admin")
 except Exception:  # noqa: BLE001
     pass
+# 确保演示账号存在（登录页「一键体验 Demo」用；线上空库也能直接体验）
+try:
+    if not any(u["username"] == "demo" for u in auth.list_users()):
+        auth.create_user("demo", "demo123456", role="user")
+except Exception:  # noqa: BLE001
+    pass
 
 
 def get_current_user(authorization: str | None = Header(default=None)) -> dict:
