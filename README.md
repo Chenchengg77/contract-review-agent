@@ -55,7 +55,7 @@
 
 | 模块 | 能力 |
 |---|---|
-| 🔍 **合同审查** | 上传 `.docx` 或选模板 → 四阶段进度 → 13 类条款判定 → 可复制修订建议 |
+| 🔍 **合同审查** | 上传 `.docx` 或选模板 → 四阶段进度 → 13 类条款判定 → 可复制修订建议；可选**人工确认**（高风险先暂停，确认后出报告） |
 | 💬 **AI 对话** | 合同问答（RAG，带条款引用、可拒答）/ 法律问答 / 历史会话 |
 | ⚖️ **合同对比** | 双卡选择（样例或上传）→ 逐条 Diff → 统计看板 → 风险摘要 → 导出报告 |
 | 📚 **合同模板** | 33 份示范文本，按类型筛选、预览（原样渲染 DOCX）、下载、上传自定义 |
@@ -106,7 +106,7 @@ flowchart LR
 |---|---|
 | **后端** | Python 3.12 · FastAPI · Uvicorn · SQLite（轻量迁移） |
 | **前端** | Vue 3 · TypeScript · Vite · Pinia · Vue Router · Element Plus · ECharts · docx-preview |
-| **AI** | DeepSeek（OpenAI 兼容 SDK）· 自研 RAG（BM25 + 阈值 + 拒答）· 前置护栏 |
+| **AI** | DeepSeek（OpenAI 兼容 SDK）· **LangGraph**（审查编排 + interrupt 人工确认）· 自研 RAG（BM25 + 阈值 + 拒答）· 前置护栏 |
 | **工程** | pytest（37 用例）· GitHub Actions · Docker 多阶段构建 · Render 部署 |
 
 ---
@@ -124,6 +124,7 @@ flowchart LR
 | **可评测** | 403 条人工金标 + 可复跑脚本 | 没有数字就没有迭代方向 |
 | **运行时配置** | 护栏开关 / 阈值 / 超时存 DB，改完即生效 | 调整策略不用重新部署 |
 | **失败可重试** | 失败记录落库，管理端一键重试 | 大模型偶发超时是常态 |
+| **人机协同** | LangGraph 把审查编成状态图，高风险在 `confirm` 节点 `interrupt` 暂停，人确认后 `Command(resume)` 恢复 | 高风险条款不该机器直接出结论 |
 
 ---
 
@@ -257,6 +258,8 @@ python scripts/seed_demo.py                # 造演示数据
 |---|---|---|
 | POST | `/api/review` | 上传合同审查 |
 | POST | `/api/review_sample` | 审查示例合同 |
+| POST | `/api/review_graph` | **LangGraph 编排审查**（高风险返回 pending） |
+| POST | `/api/review_graph/resume` | **人工确认后恢复执行** |
 | GET | `/api/contracts` | 示例合同列表 |
 | GET | `/api/clause_text` | 取条款原文 |
 | GET | `/api/contract_text` | 取合同原文（管理端） |

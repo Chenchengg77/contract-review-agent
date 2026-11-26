@@ -15,6 +15,9 @@ export const useReviewStore = defineStore('review', {
     stage: 0,
     result: null as any,
     error: '',
+    // —— LangGraph 人工确认 ——
+    graphMode: false,
+    pending: null as any,
   }),
   actions: {
     async loadContracts() {
@@ -44,8 +47,13 @@ export const useReviewStore = defineStore('review', {
         this.error = '请先选择或上传合同'
         return
       }
+      // 人工确认模式：只支持示例合同（走 LangGraph 编排）
+      if (this.graphMode && !file) {
+        return this.startGraph()
+      }
       this.loading = true
       this.result = null
+      this.pending = null
       this.error = ''
       this.progress = 0
       this.stage = 0
@@ -75,6 +83,53 @@ export const useReviewStore = defineStore('review', {
       } finally {
         if (timer) clearInterval(timer)
         timer = null
+        this.loading = false
+      }
+    },
+    /** LangGraph 编排：无高风险直接出结果；有高风险则停在 pending 等确认 */
+    async startGraph() {
+      this.loading = true
+      this.result = null
+      this.pending = null
+      this.error = ''
+      this.progress = 0
+      this.stage = 0
+      timer = setInterval(() => this._tick(), 250)
+      try {
+        const { data } = await api.post('/review_graph', { name: this.selected })
+        this.progress = data.status === 'pending' ? 80 : 100
+        this.stage = data.status === 'pending' ? 2 : 3
+        if (data.status === 'pending') {
+          this.pending = data
+        } else {
+          this.result = data
+        }
+      } catch (e: any) {
+        this.error = e.response?.data?.detail || '审查失败'
+      } finally {
+        if (timer) clearInterval(timer)
+        timer = null
+        this.loading = false
+      }
+    },
+    /** 人工确认后恢复执行（approve / 逐条修改） */
+    async resumeGraph(action: 'approve' | 'edit' = 'approve', changes: Record<string, any> = {}) {
+      if (!this.pending) return
+      this.loading = true
+      this.error = ''
+      try {
+        const { data } = await api.post('/review_graph/resume', {
+          thread_id: this.pending.thread_id,
+          action,
+          changes,
+        })
+        this.result = data
+        this.pending = null
+        this.progress = 100
+        this.stage = 4
+      } catch (e: any) {
+        this.error = e.response?.data?.detail || '确认失败'
+      } finally {
         this.loading = false
       }
     },

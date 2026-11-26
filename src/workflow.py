@@ -75,18 +75,21 @@ def confirm_node(state: ReviewState) -> dict:
         return {"human_review": {}}
 
     # 暂停，把高风险清单交给人，等待决定
+    # decision 结构：{"action": "approve" | "edit", "changes": {条款名: {...}}}
     decision = interrupt({
         "action": "human_review",
         "high_risk": high_risk,
-        "message": f"发现 {len(high_risk)} 项高风险条款，请逐条 approve / 修改",
+        "message": f"发现 {len(high_risk)} 项高风险条款，请确认后生成报告",
     })
 
-    # 应用人的修改：{条款名: {"verdict":..., "severity":..., "reason":...}}
+    # 应用人的修改（只覆盖传进来的条款）
     if isinstance(decision, dict):
-        for j in state["judgments"]:
-            if j["clause"] in decision:
-                j.update(decision[j["clause"]])
-    return {"judgments": state["judgments"], "human_review": decision}
+        changes = decision.get("changes") or {}
+        if isinstance(changes, dict):
+            for j in state["judgments"]:
+                if j.get("clause") in changes and isinstance(changes[j["clause"]], dict):
+                    j.update(changes[j["clause"]])
+    return {"judgments": state["judgments"], "human_review": decision if isinstance(decision, dict) else {"action": "approve"}}
 
 
 def report_node(state: ReviewState) -> dict:

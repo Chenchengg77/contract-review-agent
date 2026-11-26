@@ -10,7 +10,9 @@ import json
 import re
 import shutil
 import tempfile
+import threading
 import time
+import uuid
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Response, UploadFile
@@ -25,6 +27,7 @@ from src import qa
 from src import law_qa
 from src import revision
 from src import auth
+from src import workflow as WF
 from src.assess import assess, _find_clause_text
 
 app = FastAPI(title="合同智能审查 API")
@@ -770,6 +773,138 @@ def eval_metrics() -> dict:
         "qa_cases": qa_cases,
         "per_contract": data.get("per_contract", []),
     }
+
+
+# ===== LangGraph 编排：审查 + 人工确认（human-in-the-loop）=====
+_graph_app = None
+_graph_lock = threading.Lock()
+
+
+def _get_graph():
+    """全局单例编译图（MemorySaver 按 thread_id 保存状态）。"""
+    global _graph_app
+    with _graph_lock:
+        if _graph_app is None:
+            _graph_app = WF.new_app()
+        return _graph_app
+
+
+def _summarize(judgments: list[dict]) -> dict:
+    return {
+        "high": sum(1 for j in judgments if j.get("severity") == "高"),
+        "mid": sum(1 for j in judgments if j.get("severity") == "中"),
+        "low": sum(1 for j in judgments if j.get("severity") == "低"),
+    }
+
+
+def _pending_payload(app, cfg) -> dict | None:
+    """图若停在 interrupt，取回暂停时给人工的信息。"""
+    snap = app.get_state(cfg)
+    if not snap.next:
+        return None
+    for task in getattr(snap, "tasks", None) or ():
+        for it in getattr(task, "interrupts", None) or ():
+            return it.value or {}
+    return {}
+
+
+def _graph_result(values: dict, tid: str, elapsed: float) -> dict:
+    judgments = values.get("judgments", []) or []
+    return {
+        "status": "done",
+        "thread_id": tid,
+        "filename": values.get("filename", ""),
+        "judgments": judgments,
+        "clauses": values.get("clauses", []),
+        "paragraphs": values.get("paragraphs", []),
+        "report": values.get("report", ""),
+        "overview": _summarize(judgments),
+        "usage": values.get("usage", {}),
+        "elapsed": elapsed,
+    }
+
+
+@app.post("/api/review_graph")
+def review_graph(payload: dict, user: dict = Depends(get_current_user)) -> dict:
+    """用 LangGraph 跑审查：无高风险直接出报告；有高风险则暂停，返回 pending 等确认。"""
+    name = str(payload.get("name", ""))
+    path = (config.RAW_DIR / name).resolve()
+    if not str(path).startswith(str(config.RAW_DIR.resolve())) or not path.exists():
+        raise HTTPException(404, "合同不存在")
+
+    graph = _get_graph()
+    tid = f"rg-{user['id']}-{uuid.uuid4().hex[:8]}"
+    cfg = {"configurable": {"thread_id": tid}}
+    t0 = time.time()
+    try:
+        graph.invoke({"filename": name}, cfg)
+    except Exception as e:  # noqa: BLE001
+        auth.add_review(user["id"], name, 0, 0, 0, None, status="failed", error=str(e)[:300])
+        raise HTTPException(500, f"审查失败：{e}") from e
+
+    pending = _pending_payload(graph, cfg)
+    if pending is not None:
+        snap = graph.get_state(cfg)
+        judgments = snap.values.get("judgments", []) or []
+        return {
+            "status": "pending",
+            "thread_id": tid,
+            "filename": name,
+            "high_risk": pending.get("high_risk", []),
+            "message": pending.get("message", ""),
+            "judgments": judgments,
+            "overview": _summarize(judgments),
+            "elapsed": round(time.time() - t0, 1),
+        }
+
+    snap = graph.get_state(cfg)
+    result = _graph_result(snap.values, tid, round(time.time() - t0, 1))
+    ov = result["overview"]
+    auth.add_review(
+        user["id"], name, ov["high"], ov["mid"], ov["low"], result["judgments"], duration=result["elapsed"]
+    )
+    return result
+
+
+@app.post("/api/review_graph/resume")
+def review_graph_resume(payload: dict, user: dict = Depends(get_current_user)) -> dict:
+    """人工确认后恢复执行：decision 为空 = 全部通过；也可逐条覆盖判定。"""
+    tid = str(payload.get("thread_id", ""))
+    if user["role"] != "admin" and not tid.startswith(f"rg-{user['id']}-"):
+        raise HTTPException(403, "无权操作该任务")
+    # 注意：LangGraph 把「空值」当作没有恢复值，所以这里必须给非空结构
+    decision = {
+        "action": payload.get("action") or "approve",
+        "changes": payload.get("changes") or {},
+    }
+
+    graph = _get_graph()
+    cfg = {"configurable": {"thread_id": tid}}
+    snap = graph.get_state(cfg)
+    if not snap.values:
+        raise HTTPException(404, "任务不存在或已过期")
+    if not snap.next:
+        raise HTTPException(400, "该任务已结束")
+
+    t0 = time.time()
+    try:
+        graph.invoke(WF.Command(resume=decision), cfg)
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(500, f"恢复执行失败：{e}") from e
+
+    snap = graph.get_state(cfg)
+    result = _graph_result(snap.values, tid, round(time.time() - t0, 1))
+    ov = result["overview"]
+    auth.add_review(
+        user["id"],
+        result["filename"],
+        ov["high"],
+        ov["mid"],
+        ov["low"],
+        result["judgments"],
+        duration=result["elapsed"],
+    )
+    return result
 
 
 @app.post("/api/review")

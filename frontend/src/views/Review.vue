@@ -76,6 +76,11 @@ function start() {
   store.start(file.value)
 }
 
+/** 人工确认：通过后继续执行报告节点 */
+function approve() {
+  store.resumeGraph('approve')
+}
+
 function fmtTime(ts: number) {
   if (!ts) return ''
   const d = new Date(ts * 1000)
@@ -207,9 +212,49 @@ function badgeStyle(color: string) {
                 <el-option label="乙方" value="乙方" />
               </el-select>
             </div>
-            <el-button type="primary" size="large" :loading="store.loading" @click="start">开始审查</el-button>
+            <div class="run-row">
+              <el-checkbox v-model="store.graphMode" class="graph-toggle">
+                人工确认（LangGraph）
+              </el-checkbox>
+              <el-button type="primary" size="large" :loading="store.loading" @click="start">
+                开始审查
+              </el-button>
+            </div>
           </div>
-          <div class="tip">提示：审查在后台进行，切到其他页面再回来也不会中断。</div>
+          <div class="tip">
+            提示：审查在后台进行，切到其他页面再回来也不会中断。
+            <template v-if="store.graphMode">
+              开启「人工确认」后，出现高风险条款会先暂停，由你确认后才生成报告（仅示例合同）。
+            </template>
+          </div>
+        </el-card>
+
+        <!-- 待人工确认 -->
+        <el-card v-if="store.pending" shadow="never" class="card pending-card">
+          <div class="pending-head">
+            <span class="pending-title">
+              发现 {{ store.pending.high_risk.length }} 项高风险条款
+            </span>
+            <span class="pending-sub">确认后才会生成正式报告</span>
+          </div>
+
+          <div class="pending-list">
+            <div v-for="(j, i) in store.pending.high_risk" :key="i" class="pending-item">
+              <div class="p-head">
+                <span class="p-clause">{{ j.clause_no ? j.clause_no + ' ' : '' }}{{ j.clause }}</span>
+                <span class="p-badge">{{ j.severity }}</span>
+                <span class="p-verdict">{{ j.verdict }}</span>
+              </div>
+              <p class="p-reason">{{ j.reason }}</p>
+            </div>
+          </div>
+
+          <div class="pending-actions">
+            <el-button size="small" @click="store.pending = null">放弃</el-button>
+            <el-button type="primary" :loading="store.loading" @click="approve">
+              确认并生成报告
+            </el-button>
+          </div>
         </el-card>
 
         <!-- 进度 -->
@@ -824,5 +869,80 @@ function badgeStyle(color: string) {
   .layout {
     grid-template-columns: 1fr;
   }
+}
+/* 人工确认 */
+.run-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.graph-toggle :deep(.el-checkbox__label) {
+  font-size: 12px;
+  color: #6b6f76;
+}
+.pending-card {
+  border: 1px solid #f3ded9 !important;
+  background: linear-gradient(180deg, #fffdfc 0%, #fff9f7 100%);
+}
+.pending-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.pending-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #b4544a;
+}
+.pending-sub {
+  font-size: 11.5px;
+  color: #a39d92;
+}
+.pending-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.pending-item {
+  border: 1px solid #f3e4e0;
+  border-radius: 8px;
+  background: #fff;
+  padding: 12px 14px;
+}
+.p-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.p-clause {
+  font-size: 13px;
+  font-weight: 600;
+  color: #14161a;
+}
+.p-badge {
+  font-size: 10.5px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #fff2f0;
+  color: #b4544a;
+}
+.p-verdict {
+  font-size: 11.5px;
+  color: #94a3b8;
+  margin-left: auto;
+}
+.p-reason {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #64748b;
+  margin: 0;
+}
+.pending-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
 }
 </style>
