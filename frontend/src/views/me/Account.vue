@@ -21,7 +21,7 @@ function logout() {
 <template>
   <div class="page">
     <div class="page-head">
-      <div class="page-icon" style="background: #ecfdf5; color: #059669">👤</div>
+      <div class="page-icon" style="background: #f1ede6; color: #14161a">👤</div>
       <div>
         <h1 class="page-title">账户</h1>
         <p class="page-sub">账号信息与登录状态</p>
@@ -52,7 +52,7 @@ function logout() {
         </div>
       </div>
 
-      <el-button type="danger" plain @click="logout">退出登录</el-button>
+      <button class="logout" @click="logout">退出登录</button>
     </div>
   </div>
 </template>
@@ -60,56 +60,77 @@ function logout() {
 <style scoped>
 .card {
   background: #fff;
-  border: 1px solid #e8edf5;
-  border-radius: 16px;
-  padding: 24px;
-  max-width: 640px;
+  border: 1px solid #e9e4da;
+  border-radius: 4px;
+  padding: 36px;
+  max-width: 680px;
+  box-shadow:
+    0 30px 70px -55px rgba(20, 22, 26, 0.6),
+    0 2px 6px -4px rgba(20, 22, 26, 0.12);
 }
 .profile {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #f1f5f9;
-  margin-bottom: 8px;
+  gap: 18px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e6e2da;
 }
 .avatar {
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #10b981, #14b8a6);
-  color: #fff;
+  background: #14161a;
+  color: #f5f3ef;
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-family: 'Noto Serif SC', 'Songti SC', Georgia, serif;
 }
 .name {
-  font-size: 16px;
-  font-weight: 700;
-  color: #0f172a;
+  font-family: 'Noto Serif SC', 'Songti SC', 'SimSun', Georgia, serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: #14161a;
+  letter-spacing: 1px;
 }
 .role {
-  font-size: 12px;
-  color: #94a3b8;
-  margin-top: 2px;
+  font-size: 11.5px;
+  color: #8a867d;
+  margin-top: 6px;
+  letter-spacing: 1px;
 }
 .rows {
-  margin: 10px 0 20px;
+  margin: 8px 0 30px;
 }
 .row {
   display: flex;
   justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid #f8fafc;
+  padding: 16px 0;
+  border-bottom: 1px solid #f4f1ea;
   font-size: 13px;
 }
 .k {
-  color: #94a3b8;
+  color: #8a867d;
+  letter-spacing: 0.5px;
 }
 .v {
-  color: #0f172a;
+  color: #14161a;
   font-weight: 500;
+}
+.logout {
+  background: none;
+  border: 1px solid #e6e2da;
+  color: #b4442f;
+  font-size: 12.5px;
+  letter-spacing: 1px;
+  padding: 9px 22px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+.logout:hover {
+  background: #fdf6f4;
+  border-color: #e8cfc8;
 }
 </style>

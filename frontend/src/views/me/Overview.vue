@@ -35,6 +35,7 @@ const maxHigh = computed(() => {
   return Math.max(1, ...all.map((c: any) => c.high as number))
 })
 function clauseWidth(c: any) {
+  if (!c.high) return '2%'
   return Math.max(6, (c.high / maxHigh.value) * 100) + '%'
 }
 </script>
@@ -42,36 +43,38 @@ function clauseWidth(c: any) {
 <template>
   <div class="page">
     <div class="page-head">
-      <div class="page-icon" style="background: #ecfdf5; color: #059669">📊</div>
+      <div class="page-icon" style="background: #f1ede6; color: #14161a">📊</div>
       <div>
         <h1 class="page-title">概览</h1>
         <p class="page-sub">你的审查数据（系统自动汇总）</p>
       </div>
     </div>
 
-    <div class="card">
-      <div class="mini-stats">
+    <!-- 统计 -->
+    <div class="stack">
+      <div class="card">
+        <div class="mini-stats">
         <div class="mini">
           <div class="mini-num">{{ stats?.total ?? 0 }}</div>
           <div class="mini-label">审查次数</div>
         </div>
         <div class="mini">
-          <div class="mini-num" style="color: #dc2626">{{ stats?.high ?? 0 }}</div>
+          <div class="mini-num accent">{{ stats?.high ?? 0 }}</div>
           <div class="mini-label">高风险条款</div>
         </div>
         <div class="mini">
-          <div class="mini-num" style="color: #d97706">{{ stats?.mid ?? 0 }}</div>
+          <div class="mini-num">{{ stats?.mid ?? 0 }}</div>
           <div class="mini-label">中风险条款</div>
         </div>
         <div class="mini">
-          <div class="mini-num" style="color: #16a34a">{{ stats?.low ?? 0 }}</div>
+          <div class="mini-num">{{ stats?.low ?? 0 }}</div>
           <div class="mini-label">低风险条款</div>
         </div>
       </div>
 
       <div class="sub-title">
-        审查类型分布
-        <span v-if="topCategory" class="top-tag">最常审：{{ topCategory.name }}（{{ topCategory.count }} 次）</span>
+        <span>审查类型分布</span>
+        <span v-if="topCategory" class="top-tag">最常审 · {{ topCategory.name }}（{{ topCategory.count }} 次）</span>
       </div>
       <div v-if="stats?.by_category?.length" class="cat-list">
         <div v-for="c in stats.by_category" :key="c.name" class="cat-row">
@@ -84,17 +87,26 @@ function clauseWidth(c: any) {
       </div>
       <div v-else class="empty-line">还没有审查记录，去「合同审查」试试</div>
 
-      <div class="sub-title" style="margin-top: 20px">风险分布</div>
+      <div class="sub-title" style="margin-top: 28px">
+        <span>风险分布</span>
+      </div>
       <div class="risk-bar">
-        <div class="seg" :style="{ width: ((stats?.high || 0) / riskTotal) * 100 + '%', background: '#dc2626' }"></div>
-        <div class="seg" :style="{ width: ((stats?.mid || 0) / riskTotal) * 100 + '%', background: '#d97706' }"></div>
-        <div class="seg" :style="{ width: ((stats?.low || 0) / riskTotal) * 100 + '%', background: '#16a34a' }"></div>
+        <div class="seg high" :style="{ width: ((stats?.high || 0) / riskTotal) * 100 + '%' }"></div>
+        <div class="seg mid" :style="{ width: ((stats?.mid || 0) / riskTotal) * 100 + '%' }"></div>
+        <div class="seg low" :style="{ width: ((stats?.low || 0) / riskTotal) * 100 + '%' }"></div>
+      </div>
+      <div class="risk-legend">
+        <span><i class="dot high"></i>高风险 <b>{{ stats?.high ?? 0 }}</b></span>
+        <span><i class="dot mid"></i>中风险 <b>{{ stats?.mid ?? 0 }}</b></span>
+        <span><i class="dot low"></i>低风险 <b>{{ stats?.low ?? 0 }}</b></span>
       </div>
     </div>
 
-    <!-- 风险画像（按合同类型） -->
-    <div class="card" style="margin-top: 16px">
-      <div class="card-title">风险画像 · 按合同类型</div>
+    <!-- 风险画像 -->
+    <div class="card">
+      <div class="sub-title" style="margin: 0 0 6px">
+        <span>风险画像 · 按合同类型</span>
+      </div>
       <div v-if="stats?.type_profiles?.length">
         <div v-for="t in stats.type_profiles" :key="t.type" class="type-block">
           <div class="type-head">
@@ -108,7 +120,7 @@ function clauseWidth(c: any) {
               <div class="ctrack">
                 <div class="cfill" :style="{ width: clauseWidth(c) }"></div>
               </div>
-              <span class="ccnt">{{ c.high }} 高 / {{ c.mid }} 中</span>
+              <span class="ccnt">{{ c.high }}<em>高</em> · {{ c.mid }}<em>中</em></span>
             </div>
           </div>
           <div v-else class="empty-line">该类型暂无判定明细</div>
@@ -116,30 +128,181 @@ function clauseWidth(c: any) {
       </div>
       <div v-else class="empty-line">审查记录还不够，先多审几份合同</div>
     </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
+.page {
+  position: relative;
+}
 .card {
   background: #fff;
-  border: 1px solid #e8edf5;
-  border-radius: 16px;
-  padding: 22px;
+  border: 1px solid #ece7de;
+  border-radius: 4px;
+  padding: 32px;
+  box-shadow: 0 18px 50px -48px rgba(20, 22, 26, 0.5);
+  animation: card-in 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
-.card-title {
-  font-size: 14px;
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 26px 60px -48px rgba(20, 22, 26, 0.6);
+}
+.card + .card {
+  animation-delay: 0.08s;
+}
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* 卡片间距 */
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+.stack .card + .card {
+  margin-top: 20px;
+}
+.mini-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: #fbfaf6;
+  border: 1px solid #efeae1;
+  border-radius: 3px;
+  margin-bottom: 32px;
+}
+.mini {
+  padding: 22px 20px;
+  border-left: 1px solid #efeae1;
+  text-align: center;
+}
+.mini:first-child {
+  border-left: none;
+}
+.mini-num {
+  font-family: 'Noto Serif SC', 'Songti SC', 'SimSun', Georgia, serif;
+  font-size: 32px;
   font-weight: 600;
-  color: #0f172a;
+  color: #14161a;
+  line-height: 1;
+}
+.mini-num.accent {
+  color: #b4442f;
+}
+.mini-label {
+  font-size: 11.5px;
+  color: #8a867d;
+  margin-top: 10px;
+  letter-spacing: 0.5px;
+}
+.sub-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #8a867d;
   margin-bottom: 16px;
 }
-.clause-list {
+.top-tag {
+  font-size: 10.5px;
+  letter-spacing: 1px;
+  color: #1f3fb3;
+  border: 1px solid #d9e0f4;
+  background: #f4f6fc;
+  padding: 2px 9px;
+}
+.cat-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
+.cat-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 12.5px;
+}
+.cat-name {
+  width: 52px;
+  color: #4b4f55;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+.cat-track {
+  flex: 1;
+  height: 6px;
+  background: #f1ede6;
+  overflow: hidden;
+}
+.cat-fill {
+  height: 100%;
+  background: #14161a;
+}
+.cat-count {
+  width: 28px;
+  text-align: right;
+  color: #8a867d;
+}
+.risk-bar {
+  display: flex;
+  height: 10px;
+  overflow: hidden;
+  background: #f1ede6;
+}
+.seg + .seg {
+  margin-left: 2px;
+}
+.seg.high {
+  background: #c23b2e;
+}
+.seg.mid {
+  background: #d9a021;
+}
+.seg.low {
+  background: #3f7f5f;
+}
+.risk-legend {
+  display: flex;
+  gap: 26px;
+  margin-top: 14px;
+  font-size: 11.5px;
+  color: #6b6f76;
+  letter-spacing: 0.4px;
+}
+.risk-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.risk-legend b {
+  color: #14161a;
+  font-weight: 600;
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  display: inline-block;
+}
+.dot.high {
+  background: #c23b2e;
+}
+.dot.mid {
+  background: #d9a021;
+}
+.dot.low {
+  background: #3f7f5f;
+}
 .type-block {
-  padding: 14px 0;
-  border-bottom: 1px dashed #eef2f7;
+  padding: 18px 0;
+  border-bottom: 1px solid #f1ede6;
 }
 .type-block:last-child {
   border-bottom: none;
@@ -147,152 +310,77 @@ function clauseWidth(c: any) {
 }
 .type-head {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 .type-name {
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
-  color: #0f172a;
+  color: #14161a;
+  letter-spacing: 0.5px;
 }
 .type-meta {
   font-size: 11px;
-  color: #94a3b8;
+  color: #b3b0a8;
+  letter-spacing: 0.5px;
+}
+.clause-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 .clause-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
   font-size: 12.5px;
 }
 .rank {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #f1f5f9;
-  color: #64748b;
-  font-size: 11px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 14px;
+  color: #c3bfb6;
+  font-size: 10.5px;
   flex-shrink: 0;
 }
 .cname {
-  width: 84px;
-  color: #334155;
+  width: 88px;
+  color: #4b4f55;
   flex-shrink: 0;
 }
 .ctrack {
-  flex: 1;
-  height: 9px;
-  background: #f1f5f9;
-  border-radius: 999px;
+  width: 200px;
+  flex-shrink: 0;
+  height: 4px;
+  background: #f1ede6;
   overflow: hidden;
 }
 .cfill {
   height: 100%;
-  background: linear-gradient(90deg, #f87171, #dc2626);
-  border-radius: 999px;
+  background: #b4442f;
 }
 .ccnt {
-  width: 78px;
-  text-align: right;
-  color: #94a3b8;
+  font-size: 11.5px;
+  color: #8a867d;
+  letter-spacing: 0.3px;
   flex-shrink: 0;
 }
-.mini-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 22px;
-}
-.mini {
-  background: #f8fafc;
-  border: 1px solid #eef2f7;
-  border-radius: 12px;
-  padding: 14px;
-  text-align: center;
-}
-.mini-num {
-  font-size: 22px;
-  font-weight: 800;
-  color: #0f172a;
-}
-.mini-label {
-  font-size: 11px;
-  color: #94a3b8;
-  margin-top: 2px;
-}
-.sub-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #475569;
-  margin: 0 0 10px;
-}
-.top-tag {
-  font-size: 11px;
-  font-weight: 500;
-  color: #047857;
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  border-radius: 999px;
-  padding: 2px 10px;
-}
-.risk-bar {
-  display: flex;
-  height: 12px;
-  border-radius: 999px;
-  overflow: hidden;
-  background: #f1f5f9;
-}
-.seg {
-  height: 100%;
-}
-.cat-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.cat-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 12px;
-}
-.cat-name {
-  width: 48px;
-  color: #64748b;
-  flex-shrink: 0;
-}
-.cat-track {
-  flex: 1;
-  height: 8px;
-  background: #f1f5f9;
-  border-radius: 999px;
-  overflow: hidden;
-}
-.cat-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #34d399, #10b981);
-  border-radius: 999px;
-}
-.cat-count {
-  width: 28px;
-  text-align: right;
-  color: #94a3b8;
+.ccnt em {
+  font-style: normal;
+  font-size: 10px;
+  color: #b3b0a8;
+  margin-left: 1px;
 }
 .empty-line {
   font-size: 12px;
-  color: #cbd5e1;
-  padding: 8px 0;
+  color: #b3b0a8;
+  padding: 10px 0;
 }
 @media (max-width: 900px) {
   .mini-stats {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .mini:nth-child(3) {
+    border-left: none;
   }
 }
 </style>

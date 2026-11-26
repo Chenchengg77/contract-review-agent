@@ -74,6 +74,11 @@ def init_db() -> None:
             c.execute("ALTER TABLE users ADD COLUMN default_focus TEXT NOT NULL DEFAULT ''")
         if "perspective" not in cols:
             c.execute("ALTER TABLE users ADD COLUMN perspective TEXT NOT NULL DEFAULT ''")
+        # 轻量迁移：最近登录时间 + 账号状态（active / disabled）
+        if "last_login" not in cols:
+            c.execute("ALTER TABLE users ADD COLUMN last_login REAL NOT NULL DEFAULT 0")
+        if "user_status" not in cols:
+            c.execute("ALTER TABLE users ADD COLUMN user_status TEXT NOT NULL DEFAULT 'active'")
         # 轻量迁移：reviews 存判定明细（供 AI 对话回答"哪条高风险"）
         rcols = [r[1] for r in c.execute("PRAGMA table_info(reviews)").fetchall()]
         if "judgments" not in rcols:
@@ -237,9 +242,12 @@ def create_user(username: str, password: str, role: str = "user") -> dict:
 def authenticate(username: str, password: str) -> dict | None:
     with _db() as c:
         row = c.execute("SELECT * FROM users WHERE username=?", (username.strip(),)).fetchone()
-    if row and verify_password(password, row["password_hash"]):
-        return {"id": row["id"], "username": row["username"], "role": row["role"]}
-    return None
+        if not row or not verify_password(password, row["password_hash"]):
+            return None
+        if (row["user_status"] or "active") == "disabled":
+            raise PermissionError("账号已被禁用，请联系管理员")
+        c.execute("UPDATE users SET last_login=? WHERE id=?", (time.time(), row["id"]))
+    return {"id": row["id"], "username": row["username"], "role": row["role"]}
 
 
 # ---- 会话 ----
@@ -354,6 +362,7 @@ def add_review(
     status: str = "ok",
     error: str = "",
     duration: float = 0,
+    created_at: float | None = None,
 ) -> None:
     import json
 
@@ -362,7 +371,18 @@ def add_review(
         c.execute(
             "INSERT INTO reviews(user_id, filename, high, mid, low, created_at, judgments, status, error, duration) "
             "VALUES(?,?,?,?,?,?,?,?,?,?)",
-            (user_id, filename, high, mid, low, time.time(), payload, status, error, duration),
+            (
+                user_id,
+                filename,
+                high,
+                mid,
+                low,
+                created_at if created_at is not None else time.time(),
+                payload,
+                status,
+                error,
+                duration,
+            ),
         )
 
 
@@ -386,21 +406,19 @@ def latest_review(filename: str) -> dict | None:
     return d
 
 
-def list_reviews(user_id: int | None = None, limit: int = 50) -> list[dict]:
-    """user_id=None 表示查全部（管理员）。"""
+def list_reviews(user_id: int | None = None, limit: int | None = None) -> list[dict]:
+    """user_id=None 表示查全部（管理员）；limit=None 表示不限条数。"""
     with _db() as c:
-        if user_id is None:
-            rows = c.execute(
-                "SELECT r.*, u.username FROM reviews r JOIN users u ON r.user_id=u.id "
-                "ORDER BY r.created_at DESC LIMIT ?",
-                (limit,),
-            ).fetchall()
-        else:
-            rows = c.execute(
-                "SELECT r.*, u.username FROM reviews r JOIN users u ON r.user_id=u.id "
-                "WHERE r.user_id=? ORDER BY r.created_at DESC LIMIT ?",
-                (user_id, limit),
-            ).fetchall()
+        sql = (
+            "SELECT r.*, u.username FROM reviews r JOIN users u ON r.user_id=u.id "
+            + ("WHERE r.user_id=? " if user_id is not None else "")
+            + "ORDER BY r.created_at DESC"
+        )
+        params: list = [] if user_id is None else [user_id]
+        if limit:
+            sql += " LIMIT ?"
+            params.append(limit)
+        rows = c.execute(sql, params).fetchall()
     return [dict(r) for r in rows]
 
 
@@ -409,10 +427,42 @@ def list_users() -> list[dict]:
         rows = c.execute(
             """SELECT u.id, u.username, u.role, u.created_at,
                       u.default_contract_type, u.default_focus, u.perspective,
+                      u.last_login, u.user_status,
                       (SELECT COUNT(*) FROM reviews r WHERE r.user_id = u.id) AS review_count
                FROM users u ORDER BY u.id"""
         ).fetchall()
     return [dict(r) for r in rows]
+
+
+def set_user_status(user_id: int, status: str) -> bool:
+    """启用 / 禁用账号。禁用后该用户的会话立即失效。"""
+    if status not in ("active", "disabled"):
+        raise ValueError("状态只能是 active 或 disabled")
+    with _db() as c:
+        cur = c.execute("UPDATE users SET user_status=? WHERE id=?", (status, user_id))
+        if cur.rowcount and status == "disabled":
+            c.execute("DELETE FROM sessions WHERE user_id=?", (user_id,))
+        return cur.rowcount > 0
+
+
+def update_user(user_id: int, role: str | None = None, password: str | None = None) -> bool:
+    """修改角色 / 重置密码。"""
+    with _db() as c:
+        exists = c.execute("SELECT 1 FROM users WHERE id=?", (user_id,)).fetchone()
+        if not exists:
+            return False
+        if role:
+            if role not in ("user", "admin"):
+                raise ValueError("角色不合法")
+            c.execute("UPDATE users SET role=? WHERE id=?", (role, user_id))
+        if password:
+            if len(password) < 6:
+                raise ValueError("密码至少 6 位")
+            c.execute(
+                "UPDATE users SET password_hash=? WHERE id=?",
+                (hash_password(password), user_id),
+            )
+        return True
 
 
 def delete_user(user_id: int) -> bool:

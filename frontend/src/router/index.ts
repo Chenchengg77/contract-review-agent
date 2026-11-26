@@ -17,18 +17,16 @@ const routes = [
       { path: 'templates', component: () => import('../views/Templates.vue') },
       { path: 'eval', component: () => import('../views/Eval.vue') },
       { path: 'about', component: () => import('../views/About.vue') },
-    ],
-  },
-
-  // 个人中心（独立布局）
-  {
-    path: '/me',
-    component: () => import('../layouts/MeLayout.vue'),
-    children: [
-      { path: '', redirect: '/me/overview' },
-      { path: 'overview', component: () => import('../views/me/Overview.vue') },
-      { path: 'reviews', component: () => import('../views/me/Reviews.vue') },
-      { path: 'account', component: () => import('../views/me/Account.vue') },
+      {
+        path: 'me',
+        component: () => import('../views/me/MeShell.vue'),
+        children: [
+          { path: '', redirect: '/me/overview' },
+          { path: 'overview', component: () => import('../views/me/Overview.vue') },
+          { path: 'reviews', component: () => import('../views/me/Reviews.vue') },
+          { path: 'account', component: () => import('../views/me/Account.vue') },
+        ],
+      },
     ],
   },
 

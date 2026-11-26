@@ -280,7 +280,7 @@ async function send() {
             <el-option v-for="c in contracts" :key="c" :label="c" :value="c" />
           </el-select>
         </div>
-        <el-button type="primary" style="width: 100%; margin-top: 12px" @click="newConversation()">+ 新对话</el-button>
+        <button class="new-btn" @click="newConversation()">+ 新对话</button>
       </div>
 
       <div class="conv-section">
@@ -315,21 +315,33 @@ async function send() {
     <div class="main">
       <div ref="box" class="messages">
         <div v-if="!messages.length" class="empty-state">
-          <div class="icon">{{ mode === 'law' ? '📚' : '⚖️' }}</div>
+          <div class="es-mark">问</div>
           <div class="es-title">{{ mode === 'law' ? '法律知识助手' : '合同 AI 助手' }}</div>
           <p>{{ hint }}</p>
+          <div class="es-cards">
+            <button
+              v-for="[label, q] in quick"
+              :key="label"
+              class="es-card"
+              @click="input = q; send()"
+            >
+              {{ label }}
+            </button>
+          </div>
         </div>
         <div v-for="(m, i) in messages" :key="i" class="msg" :class="m.role">
           <div class="bubble chat-text" v-html="m.html" @click="onAnswerClick"></div>
         </div>
       </div>
       <div class="input-bar">
-        <input
-          v-model="input"
-          :placeholder="mode === 'law' ? '输入法律问题…（Enter 发送）' : '问关于这份合同的问题…（Enter 发送）'"
-          @keyup.enter="send"
-        />
-        <el-button type="primary" :loading="sending" @click="send">发送</el-button>
+        <div class="pill">
+          <input
+            v-model="input"
+            :placeholder="mode === 'law' ? '输入法律问题…（Enter 发送）' : '问关于这份合同的问题…（Enter 发送）'"
+            @keyup.enter="send"
+          />
+          <button class="send-round" :disabled="sending" @click="send">{{ sending ? '…' : '发送' }}</button>
+        </div>
       </div>
     </div>
 
@@ -343,8 +355,8 @@ async function send() {
 <style scoped>
 .chat-page {
   display: flex;
-  height: calc(100vh - 60px);
-  background: #f8fafc;
+  height: calc(100vh - 64px);
+  background: #faf8f4;
 }
 /* 可点击的条款引用 */
 :deep(.clause-link) {
@@ -374,28 +386,32 @@ async function send() {
 .side {
   width: 288px;
   flex-shrink: 0;
-  background: #fff;
-  border-right: 1px solid #e2e8f0;
+  background: #fdfcf9;
+  border-right: 1px solid #e6e2da;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 .side-top {
   padding: 20px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #ece7de;
 }
 .title {
+  font-family: 'Noto Serif SC', 'Songti SC', 'SimSun', Georgia, serif;
   font-weight: 600;
+  letter-spacing: 1px;
+  color: #14161a;
 }
 .model {
-  font-size: 12px;
-  color: #94a3b8;
-  margin: 4px 0 14px;
+  font-size: 11.5px;
+  color: #a39d92;
+  margin: 5px 0 14px;
+  letter-spacing: 0.4px;
 }
 .mode-switch {
   display: flex;
-  background: #f1f5f9;
-  border-radius: 8px;
+  background: #f1ece4;
+  border-radius: 2px;
   padding: 3px;
   margin-bottom: 14px;
 }
@@ -403,17 +419,38 @@ async function send() {
   flex: 1;
   border: none;
   background: none;
-  padding: 6px;
-  border-radius: 6px;
+  padding: 7px 4px;
+  border-radius: 2px;
   font-size: 12px;
-  color: #64748b;
+  color: #7a746a;
   cursor: pointer;
+  letter-spacing: 0.4px;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 .mode-switch button.active {
   background: #fff;
-  color: #0f172a;
+  color: #14161a;
   font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(20, 22, 26, 0.08);
+}
+.new-btn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 9px 0;
+  background: #14161a;
+  color: #f7f5f1;
+  border: none;
+  border-radius: 2px;
+  font-size: 13px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.new-btn:hover {
+  background: #26292f;
 }
 .field label {
   display: block;
@@ -534,21 +571,72 @@ async function send() {
   align-items: center;
   justify-content: center;
   text-align: center;
-  color: #64748b;
+  padding: 0 24px;
 }
-.empty-state .icon {
-  font-size: 44px;
-  margin-bottom: 12px;
+.es-mark {
+  width: 54px;
+  height: 54px;
+  border: 1px solid #14161a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Noto Serif SC', 'Songti SC', 'SimSun', Georgia, serif;
+  font-size: 26px;
+  font-weight: 600;
+  color: #14161a;
+  margin-bottom: 20px;
+  position: relative;
+  background: linear-gradient(135deg, #1e3a8a, #4f46e5 60%, #7c3aed);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+.es-mark::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 8px;
+  height: 8px;
+  background: #b4442f;
 }
 .es-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #0f172a;
-  margin-bottom: 8px;
+  font-family: 'Noto Serif SC', 'Songti SC', 'SimSun', Georgia, serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: #14161a;
+  margin-bottom: 10px;
+  letter-spacing: 1.5px;
 }
 .empty-state p {
   max-width: 460px;
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 1.9;
+  color: #8a867d;
+  margin: 0 0 30px;
+}
+.es-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  max-width: 520px;
+  width: 100%;
+}
+.es-card {
+  background: #fff;
+  border: 1px solid #e6e2da;
+  border-radius: 2px;
+  padding: 13px 16px;
+  font-size: 12.5px;
+  color: #14161a;
+  text-align: left;
+  cursor: pointer;
+  letter-spacing: 0.4px;
+  transition: all 0.18s;
+}
+.es-card:hover {
+  border-color: #14161a;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px -20px rgba(20, 22, 26, 0.6);
 }
 .msg {
   display: flex;
@@ -579,22 +667,52 @@ async function send() {
   margin-top: 8px;
 }
 .input-bar {
-  border-top: 1px solid #e2e8f0;
-  background: #fff;
+  border-top: 1px solid #e6e2da;
+  background: #faf8f4;
   padding: 14px 20px;
+}
+.pill {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid #e0dbd1;
+  border-radius: 999px;
+  padding: 4px 6px 4px 18px;
+  transition: border-color 0.2s;
 }
-.input-bar input {
+.pill:focus-within {
+  border-color: #14161a;
+}
+.pill input {
   flex: 1;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  padding: 10px 14px;
-  font-size: 14px;
+  border: none;
   outline: none;
+  background: transparent;
+  font-size: 13.5px;
+  padding: 9px 0;
+  color: #14161a;
 }
-.input-bar input:focus {
-  border-color: #1d4ed8;
-  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1);
+.pill input::placeholder {
+  color: #b3b0a8;
+}
+.send-round {
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: #14161a;
+  color: #f7f5f1;
+  border: none;
+  font-size: 12.5px;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.send-round:hover {
+  background: #26292f;
+}
+.send-round:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>

@@ -69,7 +69,10 @@ def register(payload: dict) -> dict:
 
 @app.post("/api/auth/login")
 def login(payload: dict) -> dict:
-    user = auth.authenticate(payload.get("username", ""), payload.get("password", ""))
+    try:
+        user = auth.authenticate(payload.get("username", ""), payload.get("password", ""))
+    except PermissionError as e:
+        raise HTTPException(403, str(e))
     if not user:
         raise HTTPException(401, "用户名或密码错误")
     token = auth.create_session(user["id"])
@@ -118,8 +121,20 @@ def admin_stats(user: dict = Depends(require_admin)) -> dict:
 
 @app.get("/api/admin/health")
 def admin_health(user: dict = Depends(require_admin)) -> dict:
-    """系统健康检查：DB、成功/失败、平均耗时、最近一次时间。"""
-    return auth.health_stats()
+    """系统健康检查：DB、成功/失败、平均耗时、最近一次时间、依赖服务。"""
+    h = auth.health_stats()
+    # 文件解析服务：样例目录可读
+    try:
+        files_ok = config.RAW_DIR.exists() and config.RAW_DIR.is_dir()
+    except Exception:  # noqa: BLE001
+        files_ok = False
+    h["services"] = {
+        "db": bool(h.get("db")),
+        # AI 服务：有 Key 即视为已配置（不做联网探测，避免每次刷新打外部接口）
+        "llm": bool(config.DEEPSEEK_API_KEY),
+        "files": files_ok,
+    }
+    return h
 
 
 @app.get("/api/admin/failures")
@@ -176,7 +191,6 @@ def admin_clear_failures(user: dict = Depends(require_admin)) -> dict:
 @app.post("/api/admin/demo/failure")
 def admin_demo_failure(user: dict = Depends(require_admin)) -> dict:
     """演示用：注入足够多的模拟失败，使失败率超过 5% 阈值（错误信息带 [DEMO] 标记）。"""
-    demo_file = "买卖_二手车买卖合同_GF-2015-0120.docx"
     errors = [
         "[DEMO] ReadTimeout: DeepSeek API timeout after 180s",
         "[DEMO] HTTPError 429: Too Many Requests（限流）",
@@ -184,13 +198,35 @@ def admin_demo_failure(user: dict = Depends(require_admin)) -> dict:
         "[DEMO] TimeoutError: 解析超时（>60s）",
         "[DEMO] HTTPError 500: 上游服务异常",
     ]
-    # 按当前总数自适应：目标失败率 6%，且至少注入 6 条
+    # 合同、用户、时间都做分散，避免注入出一堆一模一样的记录
+    try:
+        files = [p.name for p in sorted(config.RAW_DIR.glob("*.docx"))][:10]
+    except Exception:  # noqa: BLE001
+        files = []
+    if not files:
+        files = ["示例合同.docx"]
+    others = [u for u in auth.list_users() if u["role"] != "admin"]
+    targets = others or [user]
+
     h = auth.health_stats()
     total = h["total"] or 1
     need = max(6, int(total * 0.06) + 1 - h["failed"])
+    now = time.time()
     for i in range(need):
+        uid = targets[i % len(targets)]["id"]
+        fname = files[i % len(files)]
+        # 分散在最近 3 小时内（每条错开 7~25 分钟）
+        ts = now - (i % 12) * 780 - (i * 137 % 420)
         auth.add_review(
-            user["id"], demo_file, 0, 0, 0, None, status="failed", error=errors[i % len(errors)]
+            uid,
+            fname,
+            0,
+            0,
+            0,
+            None,
+            status="failed",
+            error=errors[i % len(errors)],
+            created_at=ts,
         )
     h2 = auth.health_stats()
     return {
@@ -235,12 +271,97 @@ def admin_put_settings(payload: dict, user: dict = Depends(require_admin)) -> di
 @app.get("/api/reviews")
 def my_reviews(user: dict = Depends(get_current_user)) -> dict:
     """当前用户的审查记录；管理员看全部。"""
-    return {"reviews": auth.list_reviews(None if user["role"] == "admin" else user["id"])}
+    rows = auth.list_reviews(None if user["role"] == "admin" else user["id"])
+    for r in rows:
+        r["category"] = auth.contract_category(r.get("filename", ""))
+    return {"reviews": rows}
+
+
+@app.get("/api/reviews/{review_id}")
+def review_detail(review_id: int, user: dict = Depends(get_current_user)) -> dict:
+    """单条审查记录详情（含判定明细），本人或管理员可看。"""
+    r = auth.get_review(review_id)
+    if not r:
+        raise HTTPException(404, "记录不存在")
+    if user["role"] != "admin" and r.get("user_id") != user["id"]:
+        raise HTTPException(403, "无权查看该记录")
+    r["category"] = auth.contract_category(r.get("filename", ""))
+    try:
+        r["judgments"] = json.loads(r.get("judgments") or "[]")
+    except Exception:  # noqa: BLE001
+        r["judgments"] = []
+    return r
+
+
+@app.get("/api/contract_text")
+def contract_text(name: str, user: dict = Depends(get_current_user)) -> dict:
+    """读取合同原文（解析后文本），用于管理端查看原合同。"""
+    safe = Path(name).name
+    path = config.RAW_DIR / safe
+    if not path.exists():
+        raise HTTPException(404, "合同文件不存在")
+    try:
+        paras = parse(str(path))
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(400, f"解析失败：{e}")
+    text = "\n".join(str(p.get("text", "")) for p in paras if p.get("text"))
+    return {"name": safe, "text": text[:30000], "truncated": len(text) > 30000}
 
 
 @app.get("/api/admin/users")
 def admin_users(user: dict = Depends(require_admin)) -> dict:
     return {"users": auth.list_users()}
+
+
+@app.post("/api/admin/users")
+def admin_create_user(payload: dict, user: dict = Depends(require_admin)) -> dict:
+    """管理员新建账号。"""
+    role = payload.get("role", "user")
+    if role not in ("user", "admin"):
+        raise HTTPException(400, "角色不合法")
+    try:
+        created = auth.create_user(payload.get("username", ""), payload.get("password", ""), role)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return {"message": "已创建", "user": created}
+
+
+@app.patch("/api/admin/users/{user_id}")
+def admin_update_user(user_id: int, payload: dict, user: dict = Depends(require_admin)) -> dict:
+    """编辑用户：改角色 / 重置密码。"""
+    users = auth.list_users()
+    target = next((u for u in users if u["id"] == user_id), None)
+    if not target:
+        raise HTTPException(404, "用户不存在")
+    role = payload.get("role")
+    if role == "user" and target["role"] == "admin":
+        active_admins = sum(1 for u in users if u["role"] == "admin" and u["user_status"] == "active")
+        if active_admins <= 1:
+            raise HTTPException(400, "不能降级最后一个管理员")
+    try:
+        auth.update_user(user_id, role=role, password=payload.get("password") or None)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return {"message": "已更新"}
+
+
+@app.patch("/api/admin/users/{user_id}/status")
+def admin_set_user_status(user_id: int, payload: dict, user: dict = Depends(require_admin)) -> dict:
+    """启用 / 禁用账号。"""
+    status = payload.get("status", "")
+    if status not in ("active", "disabled"):
+        raise HTTPException(400, "状态不合法")
+    if user_id == user["id"] and status == "disabled":
+        raise HTTPException(400, "不能禁用自己的账号")
+    users = auth.list_users()
+    target = next((u for u in users if u["id"] == user_id), None)
+    if not target:
+        raise HTTPException(404, "用户不存在")
+    if target["role"] == "admin" and status == "disabled":
+        if sum(1 for u in users if u["role"] == "admin" and u["user_status"] == "active") <= 1:
+            raise HTTPException(400, "不能禁用最后一个管理员")
+    auth.set_user_status(user_id, status)
+    return {"message": "已更新"}
 
 
 @app.delete("/api/admin/users/{user_id}")

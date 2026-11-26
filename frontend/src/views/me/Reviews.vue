@@ -26,7 +26,7 @@ function fmt(ts: number) {
 <template>
   <div class="page">
     <div class="page-head">
-      <div class="page-icon" style="background: #ecfdf5; color: #059669">📋</div>
+      <div class="page-icon" style="background: #f1ede6; color: #14161a">📋</div>
       <div>
         <h1 class="page-title">我的审查</h1>
         <p class="page-sub">共 {{ reviews.length }} 条审查记录</p>
@@ -38,9 +38,9 @@ function fmt(ts: number) {
         <el-table-column prop="filename" label="合同" min-width="300" show-overflow-tooltip />
         <el-table-column label="高 / 中 / 低" width="150">
           <template #default="{ row }">
-            <span style="color: #dc2626">{{ row.high }}</span> /
-            <span style="color: #d97706">{{ row.mid }}</span> /
-            <span style="color: #16a34a">{{ row.low }}</span>
+            <span class="hi">{{ row.high }}</span> /
+            <span class="mi">{{ row.mid }}</span> /
+            <span class="lo">{{ row.low }}</span>
           </template>
         </el-table-column>
         <el-table-column label="时间" width="200">
@@ -54,8 +54,20 @@ function fmt(ts: number) {
 <style scoped>
 .card {
   background: #fff;
-  border: 1px solid #e8edf5;
-  border-radius: 16px;
-  padding: 16px;
+  border: 1px solid #e9e4da;
+  border-radius: 4px;
+  padding: 12px;
+  box-shadow:
+    0 30px 70px -55px rgba(20, 22, 26, 0.6),
+    0 2px 6px -4px rgba(20, 22, 26, 0.12);
+}
+.hi {
+  color: #b4442f;
+}
+.mi {
+  color: #b98a3c;
+}
+.lo {
+  color: #6b7d6e;
 }
 </style>

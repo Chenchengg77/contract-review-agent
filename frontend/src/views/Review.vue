@@ -16,6 +16,8 @@ interface Judgment {
 const store = useReviewStore()
 const router = useRouter()
 const file = ref<File | null>(null)
+const tab = ref<'file' | 'sample'>('file')
+const dragging = ref(false)
 
 const clauseTypes = [
   '付款条款',
@@ -35,6 +37,15 @@ const clauseTypes = [
 
 onMounted(() => store.loadContracts())
 
+async function copyText(t: string) {
+  try {
+    await navigator.clipboard.writeText(t)
+    ElMessage.success('已复制，可粘贴到合同里')
+  } catch {
+    ElMessage.error('复制失败，请手动选中复制')
+  }
+}
+
 watch(
   () => store.error,
   (v) => {
@@ -52,10 +63,12 @@ function onFile(e: Event) {
 }
 
 function onDrop(e: DragEvent) {
+  dragging.value = false
   const f = e.dataTransfer?.files?.[0] || null
   if (f) {
     file.value = f
     store.selected = ''
+    tab.value = 'file'
   }
 }
 
@@ -122,42 +135,60 @@ function badgeStyle(color: string) {
       <div class="main-col">
         <!-- 上次审查提示 -->
         <div v-if="store.lastReview && store.contracts.includes(store.lastReview.filename)" class="last-hint">
+          <span class="lh-dot"></span>
           <span class="lh-text">
             欢迎回来 —— 上次你审了「{{ store.lastReview.filename }}」（{{ fmtTime(store.lastReview.created_at) }}）
           </span>
           <button
             class="lh-btn"
-            @click="store.selected = store.lastReview!.filename; file = null"
+            @click="store.selected = store.lastReview!.filename; file = null; tab = 'sample'"
           >
             继续看这一份
           </button>
         </div>
 
         <!-- 选择合同 -->
-        <el-card shadow="never" class="card">
-          <div class="upload-row">
-            <label class="drop-zone" :class="{ filled: !!file }" @dragover.prevent @drop.prevent="onDrop">
-              <input type="file" accept=".docx" class="hidden-input" @change="onFile" />
-              <div class="dz-icon">{{ file ? '✅' : '📄' }}</div>
-              <div class="dz-title">{{ file ? file.name : '点击选择 .docx 合同' }}</div>
-              <div class="dz-sub">{{ file ? '已选择，可点此更换' : '或把文件拖到这里' }}</div>
-            </label>
+        <el-card shadow="never" class="card upload-card">
+          <div class="up-tabs">
+            <button class="up-tab" :class="{ active: tab === 'file' }" @click="tab = 'file'">
+              上传本地文件
+            </button>
+            <button class="up-tab" :class="{ active: tab === 'sample' }" @click="tab = 'sample'">
+              选用示范合同
+            </button>
+          </div>
 
-            <div class="divider"><span>或</span></div>
+          <label
+            v-show="tab === 'file'"
+            class="drop-zone"
+            :class="{ filled: !!file, dragging }"
+            @dragover.prevent="dragging = true"
+            @dragleave="dragging = false"
+            @drop.prevent="onDrop"
+          >
+            <input type="file" accept=".docx" class="hidden-input" @change="onFile" />
+            <svg class="dz-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+              <path d="M7 3.5h7.2L18.5 8v12.5H7z" stroke-linejoin="round" />
+              <path d="M14 3.5V8h4.2" stroke-linejoin="round" />
+              <path d="M9.6 12.2h5M9.6 15.4h5M9.6 18.2h3" stroke-linecap="round" />
+            </svg>
+            <div class="dz-title">{{ file ? file.name : '点击选择 .docx 合同' }}</div>
+            <div class="dz-sub">{{ file ? '已选择，可点此更换' : '或将文件拖拽到此处' }}</div>
+            <span class="scan"></span>
+          </label>
 
-            <div class="sample">
-              <label class="lbl">选示例合同</label>
-              <el-select
-                v-model="store.selected"
-                placeholder="选择示例"
-                filterable
-                style="width: 100%"
-                @change="file = null"
-              >
-                <el-option v-for="c in store.contracts" :key="c" :label="c" :value="c" />
-              </el-select>
-              <div class="sample-tip">共 {{ store.contracts.length }} 份示范文本</div>
-            </div>
+          <div v-show="tab === 'sample'" class="sample">
+            <label class="lbl">选示例合同</label>
+            <el-select
+              v-model="store.selected"
+              placeholder="选择示例"
+              filterable
+              style="width: 100%"
+              @change="file = null"
+            >
+              <el-option v-for="c in store.contracts" :key="c" :label="c" :value="c" />
+            </el-select>
+            <div class="sample-tip">共 {{ store.contracts.length }} 份示范文本</div>
           </div>
         </el-card>
 
@@ -241,7 +272,10 @@ function badgeStyle(color: string) {
                     </td>
                     <td>
                       <div class="reason">{{ j.reason }}</div>
-                      <div v-if="j.revision" class="revision">📝 修订建议：{{ j.revision }}</div>
+                      <div v-if="j.revision" class="revision">
+                        <span class="rev-text">📝 修订建议：{{ j.revision }}</span>
+                        <button class="copy-btn" @click="copyText(j.revision)">复制</button>
+                      </div>
                     </td>
                   </tr>
                 </tbody>
@@ -315,59 +349,119 @@ function badgeStyle(color: string) {
 }
 
 /* 上传区 */
-.upload-row {
+.upload-card {
+  border: 1px solid #ece7f6 !important;
+  background: linear-gradient(180deg, #fffdf8 0%, #fffbf4 100%);
+  border-radius: 14px;
+}
+.up-tabs {
   display: flex;
-  align-items: center;
-  gap: 18px;
+  gap: 28px;
+  border-bottom: 1px solid #efeaf9;
+  margin-bottom: 16px;
+}
+.up-tab {
+  background: none;
+  border: none;
+  padding: 0 0 11px;
+  font-size: 13px;
+  color: #8a867d;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s;
+}
+.up-tab:hover {
+  color: #4f46e5;
+}
+.up-tab.active {
+  color: #14161a;
+  border-bottom-color: #a5b4fc;
 }
 .drop-zone {
-  flex: 1;
-  border: 1.5px dashed #cbd5e1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 190px;
+  border: 1.5px dashed #c8c2ee;
   border-radius: 14px;
   padding: 26px 20px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.2s;
-  background: #fbfcfe;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s;
+  background: #fffdf8;
 }
-.drop-zone:hover {
-  border-color: #2563eb;
-  background: #f5f8ff;
+.drop-zone:hover,
+.drop-zone.dragging {
+  border-color: #a5b4fc;
+  background: #fffefb;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.06);
 }
 .drop-zone.filled {
   border-style: solid;
   border-color: #bbf7d0;
-  background: #f0fdf4;
+  background: #f7fdf9;
 }
 .hidden-input {
   display: none;
 }
-.dz-icon {
-  font-size: 26px;
-  margin-bottom: 8px;
+.dz-ico {
+  width: 34px;
+  height: 34px;
+  color: #8b8ae0;
+  margin-bottom: 10px;
+}
+.drop-zone.filled .dz-ico {
+  color: #10b981;
 }
 .dz-title {
   font-size: 14px;
   font-weight: 600;
-  color: #0f172a;
+  color: #14161a;
   word-break: break-all;
 }
 .dz-sub {
   font-size: 12px;
-  color: #94a3b8;
+  color: #a39d92;
   margin-top: 4px;
 }
-.divider {
-  color: #cbd5e1;
-  font-size: 12px;
+/* 扫描线：hover / 拖拽时出现 */
+.scan {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -45%;
+  width: 45%;
+  background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.13), transparent);
+  opacity: 0;
+  pointer-events: none;
+}
+.drop-zone:hover .scan,
+.drop-zone.dragging .scan {
+  opacity: 1;
+  animation: scan-x 3.8s linear infinite;
+}
+@keyframes scan-x {
+  0% {
+    left: -45%;
+  }
+  100% {
+    left: 100%;
+  }
 }
 .sample {
-  flex: 1;
   min-width: 0;
 }
 .sample-tip {
   font-size: 11px;
-  color: #94a3b8;
+  color: #a39d92;
   margin-top: 6px;
 }
 
@@ -512,11 +606,35 @@ function badgeStyle(color: string) {
 .revision {
   margin-top: 6px;
   font-size: 12px;
-  color: #1d4ed8;
-  background: #eff6ff;
-  border-radius: 8px;
+  color: #1f3fb3;
+  background: #f4f6fc;
+  border: 1px solid #dde3f5;
+  border-radius: 2px;
   padding: 8px 10px;
   line-height: 1.6;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.rev-text {
+  flex: 1;
+}
+.copy-btn {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid #dde3f5;
+  color: #1f3fb3;
+  font-size: 11px;
+  padding: 2px 9px;
+  border-radius: 2px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: all 0.15s;
+}
+.copy-btn:hover {
+  background: #1f3fb3;
+  color: #fff;
+  border-color: #1f3fb3;
 }
 
 /* 上次审查提示 */
@@ -525,28 +643,49 @@ function badgeStyle(color: string) {
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
+  background: #fff;
+  border: 1px solid #ece7f6;
   border-radius: 12px;
-  padding: 10px 14px;
+  padding: 12px 16px;
   font-size: 12.5px;
-  color: #1e40af;
+  color: #475569;
+  box-shadow: 0 10px 26px -22px rgba(79, 70, 229, 0.55);
+}
+.lh-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #8b5cf6;
+  flex-shrink: 0;
+  animation: lh-breath 2.6s ease-in-out infinite;
+}
+@keyframes lh-breath {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.45);
+    opacity: 0.7;
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(139, 92, 246, 0);
+    opacity: 1;
+  }
 }
 .lh-text {
   flex: 1;
   min-width: 200px;
 }
 .lh-btn {
-  background: #fff;
-  border: 1px solid #bfdbfe;
-  color: #1d4ed8;
-  font-size: 12px;
-  border-radius: 8px;
-  padding: 5px 12px;
+  background: none;
+  border: none;
+  color: #4f46e5;
+  font-size: 12.5px;
+  font-weight: 600;
   cursor: pointer;
+  padding: 0;
+  letter-spacing: 0.3px;
 }
 .lh-btn:hover {
-  background: #dbeafe;
+  text-decoration: underline;
 }
 
 /* 主动追问 */
