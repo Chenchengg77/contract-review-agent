@@ -87,6 +87,14 @@ const abilities = [
   { n: '04', title: '可运维', desc: '健康检查、失败重试、运行时配置，出问题能定位能修。' },
 ]
 
+const assistantAbilities = [
+  { name: '前置拦截', how: '检索阈值 + 意图分类（Guardrails）', effect: '越界问题拒答；阈值命中零成本' },
+  { name: '审查上下文', how: '注入最近一次审查摘要', effect: '能回答「哪条高风险」' },
+  { name: '人设语气', how: 'system prompt 人设 + 语气规则', effect: '更像法务顾问，避免机器人腔' },
+  { name: '主动追问', how: '审查完成后模板文案', effect: '引导用户继续提问' },
+  { name: '记住用户', how: '/me/stats 最近记录', effect: '默认上次审查的合同' },
+]
+
 const advantages = [
   {
     n: '01',
@@ -280,6 +288,26 @@ const steps = [
                 <div class="cmp-meta">{{ c.after.cost }}<br />{{ c.after.why }}</div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI 助手能力 -->
+    <section class="section">
+      <div class="section-inner">
+        <div class="sec-head reveal">
+          <div class="sec-eyebrow">ASSISTANT</div>
+          <h2>五件事，让它像个法务助手</h2>
+        </div>
+        <div class="abtable reveal">
+          <div class="abrow abhead">
+            <span>能力</span><span>实现方式</span><span>效果</span>
+          </div>
+          <div v-for="a in assistantAbilities" :key="a.name" class="abrow">
+            <span class="ab-name">{{ a.name }}</span>
+            <span class="ab-how">{{ a.how }}</span>
+            <span class="ab-effect">{{ a.effect }}</span>
           </div>
         </div>
       </div>
@@ -708,6 +736,34 @@ const steps = [
   border-radius: 2px;
   padding: 4px 9px;
   letter-spacing: 0.3px;
+}
+/* 助手能力表 */
+.abtable {
+  border-top: 1px solid var(--line);
+}
+.abrow {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr 1.7fr;
+  gap: 24px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12.5px;
+}
+.abhead {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #a39d92;
+}
+.ab-name {
+  color: var(--ink);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.ab-how {
+  color: #6b6f76;
+}
+.ab-effect {
+  color: #0f766e;
 }
 /* 对比块 */
 .cmp-list {
