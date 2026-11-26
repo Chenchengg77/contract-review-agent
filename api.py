@@ -1106,7 +1106,7 @@ async def chat(payload: dict, user: dict = Depends(get_current_user)) -> dict:
     if not str(path).startswith(str(config.RAW_DIR.resolve())) or not path.exists():
         raise HTTPException(404, "合同不存在")
 
-    return qa.answer_question(path, question, _get_client(), history, _review_context(name))
+    return qa.answer_with_tools(path, question, _get_client(), history, _review_context(name))
 
 
 @app.post("/api/law_chat")
@@ -1132,7 +1132,7 @@ async def chat_stream(payload: dict, user: dict = Depends(get_current_user)):
     if not str(path).startswith(str(config.RAW_DIR.resolve())) or not path.exists():
         raise HTTPException(404, "合同不存在")
     return StreamingResponse(
-        qa.stream_answer_question(
+        qa.stream_answer_with_tools(
             path, question, _get_client(), payload.get("history") or [], _review_context(name)
         ),
         media_type="text/event-stream",

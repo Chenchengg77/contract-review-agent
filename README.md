@@ -56,7 +56,7 @@
 | 模块 | 能力 |
 |---|---|
 | 🔍 **合同审查** | 上传 `.docx` 或选模板 → 四阶段进度 → 13 类条款判定 → 可复制修订建议；可选**人工确认**（高风险先暂停，确认后出报告） |
-| 💬 **AI 对话** | 合同问答（RAG，带条款引用、可拒答）/ 法律问答 / 历史会话 |
+| 💬 **AI 对话** | 合同问答（RAG + **工具调用**，带条款引用、可拒答）/ 法律问答 / 历史会话 |
 | ⚖️ **合同对比** | 双卡选择（样例或上传）→ 逐条 Diff → 统计看板 → 风险摘要 → 导出报告 |
 | 📚 **合同模板** | 33 份示范文本，按类型筛选、预览（原样渲染 DOCX）、下载、上传自定义 |
 | 📊 **评估数据** | 31 份 / 403 条金标指标、版本对比、前置拦截对比 |
@@ -106,7 +106,7 @@ flowchart LR
 |---|---|
 | **后端** | Python 3.12 · FastAPI · Uvicorn · SQLite（轻量迁移） |
 | **前端** | Vue 3 · TypeScript · Vite · Pinia · Vue Router · Element Plus · ECharts · docx-preview |
-| **AI** | DeepSeek（OpenAI 兼容 SDK）· **LangGraph**（审查编排 + interrupt 人工确认）· 自研 RAG（BM25 + 阈值 + 拒答）· 前置护栏 |
+| **AI** | DeepSeek（OpenAI 兼容 SDK）· **LangGraph**（审查编排 + interrupt 人工确认）· **工具调用**（function calling）· 自研 RAG（BM25 + 阈值 + 拒答）· 前置护栏 |
 | **工程** | pytest（37 用例）· GitHub Actions · Docker 多阶段构建 · Render 部署 |
 
 ---
@@ -125,6 +125,19 @@ flowchart LR
 | **运行时配置** | 护栏开关 / 阈值 / 超时存 DB，改完即生效 | 调整策略不用重新部署 |
 | **失败可重试** | 失败记录落库，管理端一键重试 | 大模型偶发超时是常态 |
 | **人机协同** | LangGraph 把审查编成状态图，高风险在 `confirm` 节点 `interrupt` 暂停，人确认后 `Command(resume)` 恢复 | 高风险条款不该机器直接出结论 |
+| **工具调用** | 问答里模型可主动调用 4 个只读工具（见下） | 算数、查法条、取精确原文，不该靠模型硬猜 |
+
+### 问答工具集（function calling）
+
+| 工具 | 作用 | 为什么需要 |
+|---|---|---|
+| `get_clause(clause_name)` | 按条款名取完整原文 | 检索排不到时，用户明确问某条要能精准定位 |
+| `search_law(keyword)` | 检索民法典等法条 | 「这样约定合法吗」必须引用真实条文 |
+| `calc_penalty(amount, rate_percent / daily_rate, days)` | 算违约金 / 逾期利息 | **模型算数不可靠**，交给代码算 |
+| `get_review_summary()` | 读最近一次审查结论 | 「哪条高风险」直接用结构化结果，不重新推理 |
+
+> 实现：`src/tools.py`（工具定义 + 执行器）+ `src/qa.py`（最多 3 轮工具循环，支持流式下发 `tools` 事件）。
+> 模型不支持 tool calling 时**自动退回普通 RAG**，不会 500。
 
 ---
 

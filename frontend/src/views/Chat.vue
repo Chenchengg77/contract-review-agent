@@ -9,6 +9,14 @@ interface Msg {
   html: string
 }
 
+// 工具调用展示名
+const TOOL_LABEL: Record<string, string> = {
+  get_clause: '查合同条款',
+  search_law: '查法条',
+  calc_penalty: '算金额',
+  get_review_summary: '读审查结论',
+}
+
 interface Conv {
   id: string
   title: string
@@ -193,6 +201,7 @@ async function send() {
 
   let answer = ''
   let citations: string[] = []
+  let tools: any[] = []
   let lastRender = 0
 
   try {
@@ -238,6 +247,8 @@ async function send() {
         }
         if (ev === 'citations') {
           citations = obj.citations || []
+        } else if (ev === 'tools') {
+          tools = obj.tools || []
         } else if (ev === 'token') {
           answer += obj.text || ''
           const now = Date.now()
@@ -251,7 +262,15 @@ async function send() {
     }
 
     const cites = citations.filter((c) => c && c !== '正文')
-    messages.value[idx].html = md(answer) + (cites.length ? `<div class="cites">引用：${cites.join('、')}</div>` : '')
+    const toolHtml = tools.length
+      ? `<div class="tool-chips">${tools
+          .map((t: any) => `<span class="tool-chip">${TOOL_LABEL[t.name] || t.name}</span>`)
+          .join('')}</div>`
+      : ''
+    messages.value[idx].html =
+      toolHtml +
+      md(answer) +
+      (cites.length ? `<div class="cites">引用：${cites.join('、')}</div>` : '')
     history.value.push({ role: 'user', content: q }, { role: 'assistant', content: answer })
     persist()
   } catch (e: any) {
@@ -665,6 +684,20 @@ async function send() {
   font-size: 12px;
   color: #94a3b8;
   margin-top: 8px;
+}
+:deep(.tool-chips) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+:deep(.tool-chip) {
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f1f5fb;
+  border: 1px solid #e2eaf8;
+  color: #4a6b9a;
 }
 .input-bar {
   border-top: 1px solid #e6e2da;
