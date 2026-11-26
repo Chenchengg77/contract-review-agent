@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TypedDict
 
 from langgraph.graph import StateGraph, START, END
@@ -25,6 +26,7 @@ from src.report import generate_markdown
 
 class ReviewState(TypedDict, total=False):
     filename: str
+    path: str  # 上传文件时的临时绝对路径；为空则用 RAW_DIR/filename
     paragraphs: list
     clauses: list
     judgments: list
@@ -54,7 +56,10 @@ def _get_types():
 
 # ---- 节点 ----
 def parse_node(state: ReviewState) -> dict:
-    paragraphs = parse(config.RAW_DIR / state["filename"])
+    """解析合同：优先用上传文件的临时路径，否则按示例文件名找。"""
+    raw = state.get("path")
+    path = Path(raw) if raw else (config.RAW_DIR / state["filename"])
+    paragraphs = parse(path)
     return {"paragraphs": paragraphs}
 
 

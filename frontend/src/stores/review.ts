@@ -47,9 +47,9 @@ export const useReviewStore = defineStore('review', {
         this.error = '请先选择或上传合同'
         return
       }
-      // 人工确认模式：只支持示例合同（走 LangGraph 编排）
-      if (this.graphMode && !file) {
-        return this.startGraph()
+      // 人工确认模式：示例合同或上传文件都走 LangGraph 编排
+      if (this.graphMode) {
+        return this.startGraph(file)
       }
       this.loading = true
       this.result = null
@@ -87,7 +87,11 @@ export const useReviewStore = defineStore('review', {
       }
     },
     /** LangGraph 编排：无高风险直接出结果；有高风险则停在 pending 等确认 */
-    async startGraph() {
+    async startGraph(file: File | null = null) {
+      if (!file && !this.selected) {
+        this.error = '请先选择或上传合同'
+        return
+      }
       this.loading = true
       this.result = null
       this.pending = null
@@ -96,7 +100,10 @@ export const useReviewStore = defineStore('review', {
       this.stage = 0
       timer = setInterval(() => this._tick(), 250)
       try {
-        const { data } = await api.post('/review_graph', { name: this.selected })
+        const fd = new FormData()
+        if (file) fd.append('file', file)
+        else fd.append('name', this.selected)
+        const { data } = await api.post('/review_graph', fd)
         this.progress = data.status === 'pending' ? 80 : 100
         this.stage = data.status === 'pending' ? 2 : 3
         if (data.status === 'pending') {

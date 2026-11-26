@@ -825,22 +825,42 @@ def _graph_result(values: dict, tid: str, elapsed: float) -> dict:
 
 
 @app.post("/api/review_graph")
-def review_graph(payload: dict, user: dict = Depends(get_current_user)) -> dict:
-    """用 LangGraph 跑审查：无高风险直接出报告；有高风险则暂停，返回 pending 等确认。"""
-    name = str(payload.get("name", ""))
-    path = (config.RAW_DIR / name).resolve()
-    if not str(path).startswith(str(config.RAW_DIR.resolve())) or not path.exists():
-        raise HTTPException(404, "合同不存在")
+async def review_graph(
+    file: UploadFile | None = File(None),
+    name: str = Form(""),
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """用 LangGraph 跑审查：支持示例合同或上传文件；有高风险则暂停，返回 pending 等确认。"""
+    tmp_path: Path | None = None
+    if file is not None and file.filename:
+        if not file.filename.lower().endswith(".docx"):
+            raise HTTPException(400, "只支持 .docx 文件")
+        content = await file.read()
+        tmp_path = config.RAW_DIR.parent / f"_graph_{uuid.uuid4().hex[:8]}.docx"
+        tmp_path.write_bytes(content)
+        display_name = file.filename
+        initial: dict = {"filename": display_name, "path": str(tmp_path)}
+    else:
+        display_name = str(name)
+        path = (config.RAW_DIR / display_name).resolve()
+        if not str(path).startswith(str(config.RAW_DIR.resolve())) or not path.exists():
+            raise HTTPException(404, "合同不存在")
+        initial = {"filename": display_name}
 
     graph = _get_graph()
     tid = f"rg-{user['id']}-{uuid.uuid4().hex[:8]}"
     cfg = {"configurable": {"thread_id": tid}}
     t0 = time.time()
     try:
-        graph.invoke({"filename": name}, cfg)
+        graph.invoke(initial, cfg)
     except Exception as e:  # noqa: BLE001
-        auth.add_review(user["id"], name, 0, 0, 0, None, status="failed", error=str(e)[:300])
+        auth.add_review(
+            user["id"], display_name, 0, 0, 0, None, status="failed", error=str(e)[:300]
+        )
         raise HTTPException(500, f"审查失败：{e}") from e
+    finally:
+        if tmp_path is not None:
+            tmp_path.unlink(missing_ok=True)
 
     pending = _pending_payload(graph, cfg)
     if pending is not None:
@@ -849,7 +869,7 @@ def review_graph(payload: dict, user: dict = Depends(get_current_user)) -> dict:
         return {
             "status": "pending",
             "thread_id": tid,
-            "filename": name,
+            "filename": display_name,
             "high_risk": pending.get("high_risk", []),
             "message": pending.get("message", ""),
             "judgments": judgments,
@@ -859,9 +879,16 @@ def review_graph(payload: dict, user: dict = Depends(get_current_user)) -> dict:
 
     snap = graph.get_state(cfg)
     result = _graph_result(snap.values, tid, round(time.time() - t0, 1))
+    result["filename"] = display_name
     ov = result["overview"]
     auth.add_review(
-        user["id"], name, ov["high"], ov["mid"], ov["low"], result["judgments"], duration=result["elapsed"]
+        user["id"],
+        display_name,
+        ov["high"],
+        ov["mid"],
+        ov["low"],
+        result["judgments"],
+        duration=result["elapsed"],
     )
     return result
 

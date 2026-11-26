@@ -212,20 +212,19 @@ function badgeStyle(color: string) {
                 <el-option label="乙方" value="乙方" />
               </el-select>
             </div>
-            <div class="run-row">
-              <el-checkbox v-model="store.graphMode" class="graph-toggle">
-                人工确认（LangGraph）
-              </el-checkbox>
-              <el-button type="primary" size="large" :loading="store.loading" @click="start">
-                开始审查
-              </el-button>
-            </div>
+            <el-button type="primary" size="large" :loading="store.loading" @click="start">
+              开始审查
+            </el-button>
           </div>
+
+          <div class="run-options">
+            <el-checkbox v-model="store.graphMode" class="graph-toggle">
+              人工确认（LangGraph）：高风险条款先暂停，确认后才生成报告
+            </el-checkbox>
+          </div>
+
           <div class="tip">
             提示：审查在后台进行，切到其他页面再回来也不会中断。
-            <template v-if="store.graphMode">
-              开启「人工确认」后，出现高风险条款会先暂停，由你确认后才生成报告（仅示例合同）。
-            </template>
           </div>
         </el-card>
 
@@ -513,7 +512,7 @@ function badgeStyle(color: string) {
 /* 配置 */
 .cfg-row {
   display: grid;
-  grid-template-columns: 1fr 180px 140px;
+  grid-template-columns: 1fr 180px auto;
   gap: 16px;
   align-items: end;
 }
@@ -871,10 +870,8 @@ function badgeStyle(color: string) {
   }
 }
 /* 人工确认 */
-.run-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+.run-options {
+  margin-top: 10px;
 }
 .graph-toggle :deep(.el-checkbox__label) {
   font-size: 12px;

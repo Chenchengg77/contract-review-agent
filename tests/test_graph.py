@@ -33,10 +33,10 @@ def test_resume_unknown_thread_returns_404(client):
 
 def test_review_graph_rejects_missing_contract(client, new_user):
     headers, _, _ = new_user
-    r = client.post("/api/review_graph", json={"name": "不存在的合同.docx"}, headers=headers)
+    r = client.post("/api/review_graph", data={"name": "不存在的合同.docx"}, headers=headers)
     assert r.status_code == 404
 
 
 def test_review_graph_requires_login(client):
-    r = client.post("/api/review_graph", json={"name": "x.docx"})
+    r = client.post("/api/review_graph", data={"name": "x.docx"})
     assert r.status_code == 401
