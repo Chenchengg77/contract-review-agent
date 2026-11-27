@@ -125,6 +125,28 @@ flowchart LR
 
 更细的分层图、时序图、护栏决策、数据模型见 **[docs/architecture.md](docs/architecture.md)**。
 
+### 审查流水线（LangGraph 状态图）
+
+```mermaid
+flowchart LR
+    S([START]) --> P["parse<br/>解析"]
+    P --> E["extract<br/>抽取 13 类条款"]
+    E --> A["assess<br/>规则 + 语义判定"]
+    A --> C{"confirm<br/>存在高风险?"}
+    C -- 否 --> R["report<br/>生成报告"]
+    C -- 是 --> I["interrupt<br/>暂停，等人工确认"]
+    I -- "Command(resume)" --> R
+    R --> EN([END])
+```
+
+| 情况 | 行为 |
+|---|---|
+| 无高风险 | 一条直线跑完，直接出报告 |
+| 有高风险 | 在 `confirm` 节点 `interrupt` 暂停 → 接口返回 `pending` + 高风险清单 → 人确认后 `Command(resume=...)` **从断点继续**，不重跑前面的 LLM 步骤 |
+| 状态保存 | 由 checkpointer 持有（当前 `MemorySaver`，服务重启会丢，见[已知局限](#已知局限诚实记录)） |
+
+对应接口：`POST /api/review_graph`、`POST /api/review_graph/resume`。
+
 ---
 
 ## 技术栈
@@ -134,7 +156,7 @@ flowchart LR
 | **后端** | Python 3.12 · FastAPI · Uvicorn · SQLite（轻量迁移） |
 | **前端** | Vue 3 · TypeScript · Vite · Pinia · Vue Router · Element Plus · ECharts · docx-preview |
 | **AI** | DeepSeek（OpenAI 兼容 SDK）· **LangGraph**（审查编排 + interrupt 人工确认）· **工具调用**（function calling）· RAG（**BM25 + 向量混合检索 + Rerank**，可降级为纯 BM25）· 前置护栏 |
-| **工程** | pytest（37 用例）· GitHub Actions · Docker 多阶段构建 · Render 部署 |
+| **工程** | pytest（58 用例）· GitHub Actions · Docker 多阶段构建 · Render 部署 |
 
 ---
 

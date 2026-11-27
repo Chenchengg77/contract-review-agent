@@ -174,7 +174,49 @@ erDiagram
 
 ---
 
-## 6. 错误处理策略
+## 6. LangGraph 编排与人工确认
+
+审查流水线除了顺序函数版本，还提供一条 **LangGraph 状态图**路径（`src/workflow.py`）：
+
+```mermaid
+flowchart LR
+    S([START]) --> P["parse"]
+    P --> E["extract<br/>抽取 13 类条款"]
+    E --> A["assess<br/>规则 + 语义判定"]
+    A --> C{"confirm<br/>存在高风险?"}
+    C -- 否 --> R["report"]
+    C -- 是 --> I["interrupt<br/>暂停，返回 pending"]
+    I -- "Command(resume)" --> R
+    R --> EN([END])
+```
+
+**为什么需要它**
+
+| 场景 | 顺序函数 | LangGraph |
+|---|---|---|
+| 高风险直接出报告 | 可以 | 可暂停等人确认 |
+| 人确认后继续 | 只能整条重跑（重复耗 LLM） | `Command(resume)` **从断点继续** |
+| 人修改判定 | 不支持 | 可用 `changes` 覆盖某条 verdict/severity 后再生成报告 |
+| 多轮/长流程扩展 | 需要自己写状态机 | 加节点即可 |
+
+**接口**
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| POST | `/api/review_graph` | 启动；支持示例合同（`name`）或上传（`file`）；有高风险返回 `status=pending` + `thread_id` + 高风险清单 |
+| POST | `/api/review_graph/resume` | 传 `thread_id` + `action`（`approve`/`edit`）+ 可选 `changes`，恢复执行 |
+
+**两个实现细节（踩过坑）**
+
+1. **`Command(resume={})` 传空字典会被当成"没有恢复值"**，图会一直卡在 interrupt。所以确认参数统一成结构化对象 `{action, changes}`，永远非空。
+2. **状态存在 checkpointer 里**（当前 `MemorySaver`，进程内内存）：
+   - 服务重启 / Render 休眠唤醒后，待确认任务会失效（点确认返回 404）
+   - 多 worker 部署时，请求可能打到没有该状态的进程
+   - 上生产应换 `SqliteSaver` / `PostgresSaver` 落库
+
+---
+
+## 7. 错误处理策略
 
 | 场景 | 处理 |
 |---|---|
@@ -186,7 +228,7 @@ erDiagram
 
 ---
 
-## 7. 几处取舍（面试常被问）
+## 8. 几处取舍（面试常被问）
 
 1. **为什么不直接用大模型聊天审合同？**
    → 聊天模型会编、无定位、不可评测。所以做成「抽取 → 判定 → 修订」的流水线，每步可验证。
