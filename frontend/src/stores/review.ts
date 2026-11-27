@@ -3,6 +3,18 @@ import api from '../api'
 
 let timer: any = null
 
+// 待确认任务存 sessionStorage：刷新页面不丢（后端 checkpoint 还在，能继续确认）
+const PENDING_KEY = 'pending_review'
+
+function savePending(p: any) {
+  try {
+    if (p) sessionStorage.setItem(PENDING_KEY, JSON.stringify(p))
+    else sessionStorage.removeItem(PENDING_KEY)
+  } catch {
+    /* ignore */
+  }
+}
+
 export const useReviewStore = defineStore('review', {
   state: () => ({
     contracts: [] as string[],
@@ -20,6 +32,22 @@ export const useReviewStore = defineStore('review', {
     pending: null as any,
   }),
   actions: {
+    /** 页面加载时恢复未确认的任务 */
+    restorePending() {
+      try {
+        const raw = sessionStorage.getItem(PENDING_KEY)
+        if (!raw) return
+        const p = JSON.parse(raw)
+        if (p && p.thread_id) this.pending = p
+      } catch {
+        sessionStorage.removeItem(PENDING_KEY)
+      }
+    },
+    /** 放弃待确认任务 */
+    clearPending() {
+      this.pending = null
+      savePending(null)
+    },
     async loadContracts() {
       if (this.contracts.length) return
       try {
@@ -95,6 +123,7 @@ export const useReviewStore = defineStore('review', {
       this.loading = true
       this.result = null
       this.pending = null
+      savePending(null)
       this.error = ''
       this.progress = 0
       this.stage = 0
@@ -108,6 +137,7 @@ export const useReviewStore = defineStore('review', {
         this.stage = data.status === 'pending' ? 2 : 3
         if (data.status === 'pending') {
           this.pending = data
+          savePending(data)
         } else {
           this.result = data
         }
@@ -132,9 +162,16 @@ export const useReviewStore = defineStore('review', {
         })
         this.result = data
         this.pending = null
+        savePending(null)
         this.progress = 100
         this.stage = 4
       } catch (e: any) {
+        const status = e.response?.status
+        // 任务已结束/过期（后端重启过）：清掉本地缓存，避免一直卡着
+        if (status === 400 || status === 404) {
+          this.pending = null
+          savePending(null)
+        }
         this.error = e.response?.data?.detail || '确认失败'
       } finally {
         this.loading = false

@@ -35,7 +35,11 @@ const clauseTypes = [
   '不可抗力',
 ]
 
-onMounted(() => store.loadContracts())
+onMounted(() => {
+  store.loadContracts()
+  // 刷新页面后恢复未确认的任务（后端 checkpoint 还在，能继续确认）
+  store.restorePending()
+})
 
 async function copyText(t: string) {
   try {
@@ -249,7 +253,7 @@ function badgeStyle(color: string) {
           </div>
 
           <div class="pending-actions">
-            <el-button size="small" @click="store.pending = null">放弃</el-button>
+            <el-button size="small" @click="store.clearPending()">放弃</el-button>
             <el-button type="primary" :loading="store.loading" @click="approve">
               确认并生成报告
             </el-button>
