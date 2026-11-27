@@ -350,7 +350,7 @@ python scripts/seed_demo.py                # 造演示数据
 ## API 一览
 
 <details>
-<summary>展开全部接口（40 个）</summary>
+<summary>展开全部接口（46 个）</summary>
 
 **认证**
 | 方法 | 路径 | 说明 |
@@ -421,7 +421,7 @@ python scripts/seed_demo.py                # 造演示数据
 
 ```
 contract-review-agent/
-├── api.py                    # FastAPI 入口（40 个接口）
+├── api.py                    # FastAPI 入口（46 个接口）
 ├── config.py                 # 唯一配置入口
 ├── src/
 │   ├── parser.py             # DOCX 解析（段落 + 表格 + 条款号）
@@ -454,7 +454,7 @@ contract-review-agent/
 │   ├── failures.md           # 错例库（6 个真实 bug）
 │   ├── design.md             # 设计过程
 │   └── interview-cheatsheet.md
-├── tests/                    # 37 个 pytest 用例
+├── tests/                    # 58 个 pytest 用例
 ├── scripts/                  # demo / review / evaluate / seed_demo
 ├── results/                  # 版本化评测结果
 ├── .github/workflows/        # CI
