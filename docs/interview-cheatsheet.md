@@ -54,9 +54,9 @@
 - **数据**：30 条金标，纯 BM25 Hit@3 63.3% → 混合 80.0% → 加 Rerank 后 Hit@1 63.3%、MRR 0.726
 - **类比**：两个实习生抽简历——一个只会按关键词搜（BM25），一个懂语义（向量），把两人的结果合并再让主管（Rerank）拍板
 
-### LangGraph 人工确认（human-in-the-loop）
-- **是什么**：高风险条款不让机器直接下结论，暂停等人确认
-- **怎么做**：审查编成状态图（parse→extract→assess→**confirm**→report），confirm 里 `interrupt` 暂停，人点确认后 `Command(resume)` 从断点继续
+### LangGraph 主工作流（human-in-the-loop）
+- **是什么**：整个审查流水线就是一张状态图（parse→extract→assess→revise→**confirm**→report）
+- **两条入口**：快速模式 `auto_confirm=true` 一口气跑完；人工确认模式在 confirm 里 `interrupt` 暂停，人点确认后 `Command(resume)` 从断点继续
 - **类比**：飞机起飞前的机长确认——系统把检查做完，最后一步必须人签字
 
 ### 工具调用（function calling）

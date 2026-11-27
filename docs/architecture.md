@@ -183,12 +183,23 @@ flowchart LR
     S([START]) --> P["parse"]
     P --> E["extract<br/>抽取 13 类条款"]
     E --> A["assess<br/>规则 + 语义判定"]
-    A --> C{"confirm<br/>存在高风险?"}
-    C -- 否 --> R["report"]
-    C -- 是 --> I["interrupt<br/>暂停，返回 pending"]
+    A --> RV["revise<br/>修订建议"]
+    RV --> C{"confirm<br/>存在高风险?"}
+    C -- "否 / 快速模式" --> R["report"]
+    C -- "是 & 人工确认" --> I["interrupt<br/>暂停，返回 pending"]
     I -- "Command(resume)" --> R
     R --> EN([END])
 ```
+
+**一张图，两条入口**（主链路就是它，不是"附加实现"）：
+
+| 入口 | 模式 | 说明 |
+|---|---|---|
+| `POST /api/review` | 快速 | 传 `auto_confirm=true`，审查一口气跑完，行为与旧版一致 |
+| `POST /api/review_graph` | 人工确认 | 有高风险时 `interrupt` 暂停，返回 `pending` + `thread_id` |
+| `POST /api/review_graph/resume` | — | 传 `thread_id` + `action`（`approve`/`edit`）+ 可选 `changes` |
+
+两条路径共用同一批节点，输出结构一致：`process`（段落数/条款数/耗时/tokens）、`overview`（高/中/低）、`judgments`（含 `revision`）。
 
 **为什么需要它**
 

@@ -37,8 +37,9 @@ report     生成 Markdown 审查报告（风险清单 + 原文定位 + 参考�
 | 可观测 | 手动打印 | 每个节点可插日志/追踪 |
 | 适用 | 线性流程、无人工介入 | **有分支/人工确认/需要恢复的流程** |
 
-**结论**：本项目的核心逻辑（parse/extract/assess/report）完全复用，LangGraph 只负责**编排**。
-选 LangGraph 的唯一理由：**高风险合同审查必须有人工确认**，而 interrupt/checkpoint 让这一步从"要写几百行"变成"几行"。
+**结论**：核心逻辑（parse/extract/assess/revision/report）完全复用，LangGraph 只负责**编排**。
+现在**主链路就是这张图**：`/api/review` 以 `auto_confirm=true` 走快速模式，
+`/api/review_graph` 走人工确认模式（interrupt + resume），两条入口共用同一批节点、输出结构一致。
 
 ## 三、关键设计决策
 

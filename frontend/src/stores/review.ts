@@ -132,6 +132,8 @@ export const useReviewStore = defineStore('review', {
         const fd = new FormData()
         if (file) fd.append('file', file)
         else fd.append('name', this.selected)
+        fd.append('focus', this.focus)
+        fd.append('perspective', this.perspective)
         const { data } = await api.post('/review_graph', fd)
         this.progress = data.status === 'pending' ? 80 : 100
         this.stage = data.status === 'pending' ? 2 : 3

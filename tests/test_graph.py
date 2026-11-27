@@ -1,6 +1,16 @@
-"""LangGraph 人工确认接口的权限与生命周期（不调用大模型）。"""
+"""LangGraph 接口的权限与生命周期（不调用大模型）。"""
 
 from conftest import unique
+
+from src.workflow import new_app
+
+
+def test_graph_has_revise_and_confirm_nodes():
+    """主链路节点齐全：抽取→判定→修订→确认→报告。"""
+    g = new_app().get_graph()
+    nodes = set(g.nodes.keys())
+    for name in ("parse", "extract", "assess", "revise", "confirm", "report"):
+        assert name in nodes, f"缺少节点 {name}"
 
 
 def _mk(client, prefix="g"):

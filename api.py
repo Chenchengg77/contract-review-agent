@@ -592,44 +592,38 @@ def _get_types():
 
 
 def _run_review(path: Path, focus: str = "", perspective: str = "") -> dict:
-    """执行完整审查流水线，返回结构化结果。focus 关注点，perspective 审查立场。"""
+    """执行完整审查流水线（LangGraph 快速模式：自动确认，无高风险直接出结果）。
+
+    focus 关注点，perspective 审查立场。返回结构与人工确认模式完全一致。
+    """
+    graph = _get_graph()
+    tid = f"auto-{uuid.uuid4().hex[:10]}"
+    cfg = {"configurable": {"thread_id": tid}}
     t0 = time.time()
-    paragraphs = parse(path)
-    clauses, usage = EX.extract(_get_client(), paragraphs, _get_types())
-    clauses = EX.validate(paragraphs, clauses)
-    judgments = assess(clauses, _get_types(), paragraphs, _get_client(), perspective)
-
-    # 对偏离/冲突条款生成修订建议
-    clause_map = {c["type"]: c for c in clauses}
-    playbook = {t["name"]: t for t in _get_types()}
-    for j in judgments:
-        if j.get("present") and j.get("verdict") in ("偏离", "冲突"):
-            c = clause_map.get(j["clause"])
-            full = (
-                _find_clause_text(paragraphs, c.get("clause_no"), c.get("evidence"))
-                if c else ""
-            )
-            try:
-                j["revision"] = revision.generate_revision(
-                    j["clause"], full or j.get("evidence", ""), playbook[j["clause"]], _get_client(), focus, perspective
-                )
-            except Exception:  # noqa: BLE001
-                j["revision"] = ""
-
-    dt = time.time() - t0
-
-    heads = clause_headings(paragraphs)
-    high = [j for j in judgments if j["severity"] == "高"]
-    mid = [j for j in judgments if j["severity"] == "中"]
-    low = [j for j in judgments if j["severity"] == "低"]
-
-    return {
-        "process": {
-            "paragraphs": len(paragraphs),
-            "headings": len(heads),
-            "seconds": round(dt, 1),
-            "tokens": usage["total_tokens"],
+    graph.invoke(
+        {
+            "filename": Path(path).name,
+            "path": str(path),
+            "focus": focus,
+            "perspective": perspective,
+            "auto_confirm": True,
+            "started_at": t0,
         },
+        cfg,
+    )
+    values = graph.get_state(cfg).values
+    judgments = values.get("judgments", []) or []
+    high = [j for j in judgments if j.get("severity") == "高"]
+    mid = [j for j in judgments if j.get("severity") == "中"]
+    low = [j for j in judgments if j.get("severity") == "低"]
+    process = values.get("process") or {
+        "paragraphs": len(values.get("paragraphs", []) or []),
+        "headings": len(clause_headings(values.get("paragraphs", []) or [])),
+        "seconds": round(time.time() - t0, 1),
+        "tokens": (values.get("usage") or {}).get("total_tokens", 0),
+    }
+    return {
+        "process": process,
         "overview": {"high": len(high), "mid": len(mid), "low": len(low)},
         "judgments": judgments,
     }
@@ -921,6 +915,7 @@ def _graph_result(values: dict, tid: str, elapsed: float) -> dict:
         "clauses": values.get("clauses", []),
         "paragraphs": values.get("paragraphs", []),
         "report": values.get("report", ""),
+        "process": values.get("process", {}),
         "overview": _summarize(judgments),
         "usage": values.get("usage", {}),
         "elapsed": elapsed,
@@ -931,9 +926,18 @@ def _graph_result(values: dict, tid: str, elapsed: float) -> dict:
 async def review_graph(
     file: UploadFile | None = File(None),
     name: str = Form(""),
+    focus: str = Form(""),
+    perspective: str = Form(""),
     user: dict = Depends(get_current_user),
 ) -> dict:
     """用 LangGraph 跑审查：支持示例合同或上传文件；有高风险则暂停，返回 pending 等确认。"""
+    t0 = time.time()
+    base: dict = {
+        "focus": focus,
+        "perspective": perspective,
+        "auto_confirm": False,
+        "started_at": t0,
+    }
     tmp_path: Path | None = None
     if file is not None and file.filename:
         if not file.filename.lower().endswith(".docx"):
@@ -942,18 +946,17 @@ async def review_graph(
         tmp_path = config.RAW_DIR.parent / f"_graph_{uuid.uuid4().hex[:8]}.docx"
         tmp_path.write_bytes(content)
         display_name = file.filename
-        initial: dict = {"filename": display_name, "path": str(tmp_path)}
+        initial: dict = {**base, "filename": display_name, "path": str(tmp_path)}
     else:
         display_name = str(name)
         path = (config.RAW_DIR / display_name).resolve()
         if not str(path).startswith(str(config.RAW_DIR.resolve())) or not path.exists():
             raise HTTPException(404, "合同不存在")
-        initial = {"filename": display_name}
+        initial = {**base, "filename": display_name}
 
     graph = _get_graph()
     tid = f"rg-{user['id']}-{uuid.uuid4().hex[:8]}"
     cfg = {"configurable": {"thread_id": tid}}
-    t0 = time.time()
     try:
         graph.invoke(initial, cfg)
     except Exception as e:  # noqa: BLE001
@@ -1025,6 +1028,8 @@ def review_graph_resume(payload: dict, user: dict = Depends(get_current_user)) -
     snap = graph.get_state(cfg)
     result = _graph_result(snap.values, tid, round(time.time() - t0, 1))
     ov = result["overview"]
+    # 耗时用图里记录的「从开始到出报告」（含人工确认等待时间），比只算 resume 调用更真实
+    duration = (result.get("process") or {}).get("seconds") or result["elapsed"]
     auth.add_review(
         user["id"],
         result["filename"],
@@ -1032,7 +1037,7 @@ def review_graph_resume(payload: dict, user: dict = Depends(get_current_user)) -
         ov["mid"],
         ov["low"],
         result["judgments"],
-        duration=result["elapsed"],
+        duration=duration,
     )
     return result
 

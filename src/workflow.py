@@ -1,15 +1,16 @@
-"""工作流编排：用 LangGraph 把「解析→抽取→判定→人工确认→报告」编成状态图。
+"""工作流编排：LangGraph 把「解析→抽取→判定→修订建议→人工确认→报告」编成状态图。
 
-相比手写顺序脚本，LangGraph 带来两点（对应 Day13）：
-1. 显式状态机：每个步骤是独立节点，state 统一传递中间结果；
-2. 人工确认（human-in-the-loop）：高风险条款在写报告前用 interrupt 暂停，
-   等人 approve/edit 后用 Command(resume=...) 恢复，checkpoint 保证断点可续跑。
+两条入口共用同一张图：
+- **快速模式**（`/api/review`）：`auto_confirm=True`，无高风险直接跑完出报告；
+- **人工确认模式**（`/api/review_graph`）：有高风险时在 `confirm` 节点 `interrupt` 暂停，
+  人确认后用 `Command(resume=...)` 从断点继续（checkpoint 保证不重跑前面的 LLM 步骤）。
 
-注意：核心逻辑（parser/extract/assess/report）完全复用，LangGraph 只做编排。
+核心逻辑（parser/extract/assess/revision/report）完全复用，LangGraph 只做编排。
 """
 
 from __future__ import annotations
 
+import time
 from pathlib import Path
 from typing import TypedDict
 
@@ -18,21 +19,27 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.types import interrupt, Command
 
 import config
-from src.parser import parse
+from src.parser import parse, clause_headings
 from src import extract as EX
-from src.assess import assess
+from src import revision
+from src.assess import assess, _find_clause_text
 from src.report import generate_markdown
 
 
 class ReviewState(TypedDict, total=False):
     filename: str
     path: str  # 上传文件时的临时绝对路径；为空则用 RAW_DIR/filename
+    focus: str
+    perspective: str
+    auto_confirm: bool
+    started_at: float
     paragraphs: list
     clauses: list
     judgments: list
     human_review: dict
     report: str
     usage: dict
+    process: dict
 
 
 # ---- 惰性单例：client / 条款类型 ----
@@ -70,14 +77,54 @@ def extract_node(state: ReviewState) -> dict:
 
 
 def assess_node(state: ReviewState) -> dict:
-    return {"judgments": assess(state["clauses"], _get_types(), state.get("paragraphs"), _get_client())}
+    return {
+        "judgments": assess(
+            state["clauses"],
+            _get_types(),
+            state.get("paragraphs"),
+            _get_client(),
+            state.get("perspective", ""),
+        )
+    }
+
+
+def revise_node(state: ReviewState) -> dict:
+    """对「偏离 / 冲突」条款生成修订建议（和顺序版逻辑一致）。"""
+    judgments = state.get("judgments", []) or []
+    paragraphs = state.get("paragraphs", []) or []
+    clauses = state.get("clauses", []) or []
+    clause_map = {c["type"]: c for c in clauses}
+    playbook = {t["name"]: t for t in _get_types()}
+    focus = state.get("focus", "")
+    perspective = state.get("perspective", "")
+
+    for j in judgments:
+        if j.get("present") and j.get("verdict") in ("偏离", "冲突"):
+            c = clause_map.get(j["clause"])
+            full = (
+                _find_clause_text(paragraphs, c.get("clause_no"), c.get("evidence")) if c else ""
+            )
+            try:
+                j["revision"] = revision.generate_revision(
+                    j["clause"],
+                    full or j.get("evidence", ""),
+                    playbook[j["clause"]],
+                    _get_client(),
+                    focus,
+                    perspective,
+                )
+            except Exception:  # noqa: BLE001
+                j["revision"] = ""
+    return {"judgments": judgments}
 
 
 def confirm_node(state: ReviewState) -> dict:
-    """高风险条款需人工确认；无高风险则直接通过。"""
-    high_risk = [j for j in state["judgments"] if j.get("severity") == "高"]
+    """高风险条款需人工确认；无高风险或快速模式则直接通过。"""
+    high_risk = [j for j in state.get("judgments", []) if j.get("severity") == "高"]
+    if state.get("auto_confirm"):
+        return {"human_review": {"action": "auto", "high": len(high_risk)}}
     if not high_risk:
-        return {"human_review": {}}
+        return {"human_review": {"action": "none", "high": 0}}
 
     # 暂停，把高风险清单交给人，等待决定
     # decision 结构：{"action": "approve" | "edit", "changes": {条款名: {...}}}
@@ -91,17 +138,35 @@ def confirm_node(state: ReviewState) -> dict:
     if isinstance(decision, dict):
         changes = decision.get("changes") or {}
         if isinstance(changes, dict):
-            for j in state["judgments"]:
+            for j in state.get("judgments", []):
                 if j.get("clause") in changes and isinstance(changes[j["clause"]], dict):
                     j.update(changes[j["clause"]])
-    return {"judgments": state["judgments"], "human_review": decision if isinstance(decision, dict) else {"action": "approve"}}
+    return {
+        "judgments": state.get("judgments", []),
+        "human_review": decision if isinstance(decision, dict) else {"action": "approve"},
+    }
 
 
 def report_node(state: ReviewState) -> dict:
+    judgments = state.get("judgments", []) or []
+    paragraphs = state.get("paragraphs", []) or []
+    usage = state.get("usage") or {}
+    started = state.get("started_at") or time.time()
+
     report = generate_markdown(
-        state["filename"], state["judgments"], _get_types(), usage=state.get("usage")
+        state.get("filename", ""),
+        judgments,
+        _get_types(),
+        usage=usage,
+        seconds=round(time.time() - started, 1),
     )
-    return {"report": report}
+    process = {
+        "paragraphs": len(paragraphs),
+        "headings": len(clause_headings(paragraphs)),
+        "seconds": round(time.time() - started, 1),
+        "tokens": usage.get("total_tokens", 0),
+    }
+    return {"report": report, "process": process}
 
 
 def build_graph(checkpointer=None):
@@ -110,13 +175,15 @@ def build_graph(checkpointer=None):
     g.add_node("parse", parse_node)
     g.add_node("extract", extract_node)
     g.add_node("assess", assess_node)
+    g.add_node("revise", revise_node)
     g.add_node("confirm", confirm_node)
     g.add_node("report", report_node)
 
     g.add_edge(START, "parse")
     g.add_edge("parse", "extract")
     g.add_edge("extract", "assess")
-    g.add_edge("assess", "confirm")
+    g.add_edge("assess", "revise")
+    g.add_edge("revise", "confirm")
     g.add_edge("confirm", "report")
     g.add_edge("report", END)
 
@@ -124,7 +191,7 @@ def build_graph(checkpointer=None):
 
 
 def new_app():
-    """返回一个带内存 checkpointer 的编译图（单份合同审查用）。"""
+    """返回一个带内存 checkpointer 的编译图。"""
     return build_graph(checkpointer=MemorySaver())
 
 
