@@ -17,6 +17,7 @@
 ## 目录
 
 - [这是什么](#这是什么)
+- [界面预览](#界面预览)
 - [功能矩阵](#功能矩阵)
 - [架构](#架构)
 - [技术栈](#技术栈)
@@ -46,6 +47,32 @@
 3. **该怎么改** —— 给出修订文本，可直接复制
 
 > 定位是**初审辅助**，不替代律师；所有结论都标注依据，最终由人确认。
+
+---
+
+## 界面预览
+
+> 截图来自线上部署：<https://contract-review-agent-s8f3.onrender.com>（免费实例，首次打开冷启动约 50 秒）
+
+| 首页 | 合同审查 |
+|---|---|
+| ![首页](docs/screenshots/01-home.png) | ![审查结果](docs/screenshots/02-review.png) |
+
+| AI 对话（可调工具 / 带引用） | 个人中心 · 概览 |
+|---|---|
+| ![AI 对话](docs/screenshots/03-chat.png) | ![个人中心概览](docs/screenshots/04-me-overview.png) |
+
+| 个人中心 · 分类型风险画像 | 管理端 · 系统看板 |
+|---|---|
+| ![风险画像](docs/screenshots/05-me-profile.png) | ![管理端看板](docs/screenshots/06-admin-dashboard.png) |
+
+| 管理端 · 系统运维 | 登录页 |
+|---|---|
+| ![系统运维](docs/screenshots/07-admin-ops.png) | ![登录页](docs/screenshots/08-login.png) |
+
+**合同模板库**（33 份示范文本，支持原样预览 DOCX、下载、上传自定义）：
+
+![合同模板](docs/screenshots/09-templates.png)
 
 ---
 
