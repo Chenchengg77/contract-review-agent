@@ -106,7 +106,7 @@ flowchart LR
 |---|---|
 | **后端** | Python 3.12 · FastAPI · Uvicorn · SQLite（轻量迁移） |
 | **前端** | Vue 3 · TypeScript · Vite · Pinia · Vue Router · Element Plus · ECharts · docx-preview |
-| **AI** | DeepSeek（OpenAI 兼容 SDK）· **LangGraph**（审查编排 + interrupt 人工确认）· **工具调用**（function calling）· 自研 RAG（BM25 + 阈值 + 拒答）· 前置护栏 |
+| **AI** | DeepSeek（OpenAI 兼容 SDK）· **LangGraph**（审查编排 + interrupt 人工确认）· **工具调用**（function calling）· RAG（**BM25 + 向量混合检索 + Rerank**，可降级为纯 BM25）· 前置护栏 |
 | **工程** | pytest（37 用例）· GitHub Actions · Docker 多阶段构建 · Render 部署 |
 
 ---
@@ -126,6 +126,24 @@ flowchart LR
 | **失败可重试** | 失败记录落库，管理端一键重试 | 大模型偶发超时是常态 |
 | **人机协同** | LangGraph 把审查编成状态图，高风险在 `confirm` 节点 `interrupt` 暂停，人确认后 `Command(resume)` 恢复 | 高风险条款不该机器直接出结论 |
 | **工具调用** | 问答里模型可主动调用 4 个只读工具（见下） | 算数、查法条、取精确原文，不该靠模型硬猜 |
+| **混合检索** | BM25（关键词）+ 向量（bge-m3）双路召回 → RRF 融合 → rerank 精排 | 语义问法（"钱什么时候给我"）BM25 召不回，向量能；纯向量又会丢条款号精确匹配 |
+| **可降级** | 没配 embedding key 时自动退回纯 BM25；接口失败也退回 | 增强功能不该成为单点故障 |
+
+### 检索增强（可选）
+
+```ini
+EMBEDDING_API_KEY=sk-xxx            # 不填则自动退回纯 BM25
+EMBEDDING_BASE_URL=https://api.siliconflow.cn/v1
+EMBEDDING_MODEL=BAAI/bge-m3
+RERANK_MODEL=BAAI/bge-reranker-v2-m3
+```
+
+| 机制 | 说明 |
+|---|---|
+| 混合召回 | BM25 top-k 与向量 top-k 各算一半，用 RRF 融合（`rrf_fuse`） |
+| 精排 | rerank 对融合结果重排，取 top-5 进上下文 |
+| 缓存 | 同一段文本只编码一次（进程内缓存），避免重复计费 |
+| **护栏不受影响** | 护栏阈值是按 BM25 分数标定的，所以判断「要不要拒答」仍用纯 BM25 结果 |
 
 ### 问答工具集（function calling）
 

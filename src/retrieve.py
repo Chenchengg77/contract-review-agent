@@ -87,3 +87,47 @@ def build_clause_index(contracts: list[tuple[str, list[dict]]]) -> BM25Index:
             label = (p["clause_no"] + " " + p["heading"]).strip() if p["clause_no"] else p["text"][:40]
             index.add(text, {"file": fname, "clause_no": p["clause_no"], "heading": p["heading"]})
     return index
+
+
+class HybridIndex:
+    """BM25 + 向量 混合检索（RRF 融合）。
+
+    - 未配置 embedding 时 **完全等价于 BM25**，行为不变；
+    - 保留 `bm25_hits()` 供护栏使用（护栏阈值是按 BM25 分数标定的，不能换成 RRF 分）。
+    """
+
+    def __init__(self) -> None:
+        from src.embed import VectorIndex
+
+        self.bm25 = BM25Index()
+        self.vec = VectorIndex()
+
+    def add(self, text: str, meta: dict) -> None:
+        self.bm25.add(text, meta)
+        self.vec.add(text, meta)
+
+    def bm25_hits(self, query: str, k: int = 6) -> list[dict]:
+        return self.bm25.search(query, k=k)
+
+    def search(self, query: str, k: int = 5) -> list[dict]:
+        from src.embed import enabled
+
+        if not enabled():
+            return self.bm25.search(query, k=k)
+        bm = self.bm25.search(query, k=k * 2)
+        vc = self.vec.search(query, k=k * 2)
+        if not vc:
+            return bm[:k]
+        if not bm:
+            return vc[:k]
+        return rrf_fuse([bm, vc], k=k)
+
+    def __len__(self) -> int:
+        return len(self.bm25)
+
+
+def make_index() -> "HybridIndex | BM25Index":
+    """按配置返回索引：配了 embedding 就是混合检索，否则纯 BM25。"""
+    from src.embed import enabled
+
+    return HybridIndex() if enabled() else BM25Index()

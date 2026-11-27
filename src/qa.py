@@ -11,10 +11,30 @@ from pathlib import Path
 import config
 from src.guard import REFUSAL, check_scope
 from src.parser import parse
-from src.retrieve import BM25Index
+from src.retrieve import make_index
 from src.tools import TOOLS, build_executor
 
 MAX_TOOL_ROUNDS = 3
+
+
+def _retrieve(paragraphs: list[dict], question: str, k: int = 6) -> tuple[list[dict], list[dict]]:
+    """返回 (用于生成上下文的命中, 用于护栏判定的 BM25 命中)。
+
+    护栏阈值是按 BM25 分数标定的，所以即使开了混合检索，护栏仍看纯 BM25 结果。
+    """
+    idx = make_index()
+    for p in paragraphs:
+        idx.add(p["text"], p)
+    guard_hits = idx.bm25_hits(question, k=k) if hasattr(idx, "bm25_hits") else idx.search(question, k=k)
+    hits = idx.search(question, k=k)
+
+    # 可选：rerank 重排（未配置或失败时保持原顺序）
+    from src.embed import rerank
+
+    reranked = rerank(question, hits, top_n=min(len(hits), 5))
+    if reranked:
+        hits = reranked
+    return hits, guard_hits
 
 _SYSTEM = (
     "你是「法务小助手」，一位有 10 年经验的合同审查法务，说话专业但温和。\n"
@@ -55,13 +75,10 @@ def answer_question(
 ) -> dict:
     """检索合同 → 前置拦截 → 拼 prompt → LLM 回答（带引用、能拒答）。"""
     paragraphs = parse(path)
-    idx = BM25Index()
-    for p in paragraphs:
-        idx.add(p["text"], p)
-    hits = idx.search(question, k=6)
+    hits, guard_hits = _retrieve(paragraphs, question)
 
     # 前置拦截：越界问题直接拒答，不调 LLM（省钱、快、提示明确）
-    ok, guard_why = check_scope(question, hits, client)
+    ok, guard_why = check_scope(question, guard_hits, client)
     if not ok:
         return {
             "answer": REFUSAL,
@@ -186,12 +203,9 @@ def answer_with_tools(
     仍然先过前置护栏；工具只读、只查这份合同或法条库。
     """
     paragraphs = parse(path)
-    idx = BM25Index()
-    for p in paragraphs:
-        idx.add(p["text"], p)
-    hits = idx.search(question, k=6)
+    hits, guard_hits = _retrieve(paragraphs, question)
 
-    ok, guard_why = check_scope(question, hits, client)
+    ok, guard_why = check_scope(question, guard_hits, client)
     if not ok:
         return {
             "answer": REFUSAL,
@@ -232,10 +246,7 @@ def stream_answer_with_tools(
 ):
     """流式 + 工具调用：先跑工具循环，再分片下发答案，并告知用了哪些工具。"""
     paragraphs = parse(path)
-    idx = BM25Index()
-    for p in paragraphs:
-        idx.add(p["text"], p)
-    hits = idx.search(question, k=6)
+    hits, guard_hits = _retrieve(paragraphs, question)
 
     ok, _guard_why = check_scope(question, hits, client)
     if not ok:
@@ -273,10 +284,7 @@ def stream_answer_question(
 ):
     """流式版本：先发 citations 事件，再逐 token 发 SSE，最后 done。"""
     paragraphs = parse(path)
-    idx = BM25Index()
-    for p in paragraphs:
-        idx.add(p["text"], p)
-    hits = idx.search(question, k=6)
+    hits, guard_hits = _retrieve(paragraphs, question)
 
     # 前置拦截：越界直接拒答，不进入生成
     ok, _guard_why = check_scope(question, hits, client)
