@@ -306,6 +306,13 @@ def admin_health(user: dict = Depends(require_admin)) -> dict:
         "llm": bool(config.DEEPSEEK_API_KEY),
         "files": files_ok,
     }
+    # 检索模式：hybrid = BM25 + 向量 + rerank；bm25 = 纯关键词
+    from src.embed import enabled as _embed_enabled
+
+    try:
+        h["retrieval"] = "hybrid" if _embed_enabled() else "bm25"
+    except Exception:  # noqa: BLE001
+        h["retrieval"] = "bm25"
     return h
 
 

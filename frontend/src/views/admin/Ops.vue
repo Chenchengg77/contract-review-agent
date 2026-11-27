@@ -44,16 +44,18 @@ const failRate = computed(() => (total.value ? failed.value / total.value : 0))
 
 const services = computed(() => {
   const s = health.value?.services || {}
+  const hybrid = health.value?.retrieval === 'hybrid'
   return [
     { key: 'db', name: '数据库', ok: !!s.db },
-    { key: 'llm', name: 'AI 检索服务', ok: !!s.llm },
-    { key: 'files', name: '文件解析服务', ok: !!s.files },
+    { key: 'llm', name: 'AI 模型', ok: !!s.llm },
+    { key: 'files', name: '文件解析', ok: !!s.files },
+    { key: 'retrieval', name: hybrid ? '检索：混合' : '检索：关键词', ok: true },
   ]
 })
 const allOk = computed(() => services.value.every((s) => s.ok))
 const servicesText = computed(() =>
   allOk.value
-    ? '数据库 / AI 检索 / 文件解析 全部正常'
+    ? '数据库 / AI 模型 / 文件解析 全部正常'
     : services.value
         .filter((s) => !s.ok)
         .map((s) => `${s.name}异常`)
