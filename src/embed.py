@@ -109,22 +109,37 @@ class VectorIndex:
         self._meta.append(meta)
 
     def build(self) -> bool:
-        """懒构建：把还没编码的文档补上。返回是否可用。"""
+        """懒构建：把还没编码的文档补上（命中缓存的直接复用，不重复计费）。"""
         if len(self._vecs) >= len(self._docs):
             return True
         if not enabled():
             self.failed = True
             return False
+
         need = self._docs[len(self._vecs):]
-        try:
-            vecs = encode(need)
-        except Exception:  # noqa: BLE001
-            self.failed = True
-            return False
-        if len(vecs) != len(need):
-            self.failed = True
-            return False
-        self._vecs.extend(vecs)
+        got: dict[str, list[float]] = {}
+        missing: list[str] = []
+        for text in need:
+            key = _key(text)
+            if key in _CACHE:
+                got[text] = _CACHE[key]
+            elif text not in missing:
+                missing.append(text)
+
+        if missing:
+            try:
+                vecs = encode(missing)
+            except Exception:  # noqa: BLE001
+                self.failed = True
+                return False
+            if len(vecs) != len(missing):
+                self.failed = True
+                return False
+            for text, vec in zip(missing, vecs):
+                _CACHE[_key(text)] = vec
+                got[text] = vec
+
+        self._vecs.extend(got[t] for t in need)
         return True
 
     def search(self, query: str, k: int = 5) -> list[dict]:
