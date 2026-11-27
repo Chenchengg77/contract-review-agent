@@ -1,0 +1,44 @@
+{
+  "note": "检索消融金标：每条给出「问题 + 该命中的原文片段(expect)」。覆盖关键词型与语义型问法，用于对比 BM25 / 向量 / 混合 / 混合+rerank。",
+  "cases": [
+    {"file": "买卖_二手车买卖合同_GF-2015-0120.docx", "question": "车架号在哪一项里填？", "expect": "车辆基本情况", "type": "keyword"},
+    {"file": "买卖_二手车买卖合同_GF-2015-0120.docx", "question": "车价款是多少、怎么支付？", "expect": "车辆价款", "type": "keyword"},
+    {"file": "买卖_二手车买卖合同_GF-2015-0120.docx", "question": "过户手续由谁办理、几个工作日完成？", "expect": "过户手续办理方", "type": "keyword"},
+    {"file": "买卖_二手车买卖合同_GF-2015-0120.docx", "question": "甲方什么时候交付车辆和凭证？", "expect": "交付车辆及相关凭证", "type": "keyword"},
+    {"file": "买卖_二手车买卖合同_GF-2015-0120.docx", "question": "二手车的技术状况表是什么？", "expect": "二手车技术状况表", "type": "keyword"},
+    {"file": "买卖_二手车买卖合同_GF-2015-0120.docx", "question": "甲方隐瞒车况要承担什么责任？", "expect": "故意隐瞒", "type": "keyword"},
+    {"file": "买卖_二手车买卖合同_GF-2015-0120.docx", "question": "违约金是怎么约定的？", "expect": "违约金", "type": "keyword"},
+    {"file": "买卖_二手车买卖合同_GF-2015-0120.docx", "question": "发生争议去哪里解决？", "expect": "争议", "type": "keyword"},
+    {"file": "买卖_二手车买卖合同_GF-2015-0120.docx", "question": "钱什么时候给我？", "expect": "支付时间、方式", "type": "semantic"},
+    {"file": "买卖_二手车买卖合同_GF-2015-0120.docx", "question": "对方赖账我能要多少补偿？", "expect": "违约金", "type": "semantic"},
+    {"file": "买卖_二手车买卖合同_GF-2015-0120.docx", "question": "这辆车以前出过事故吗？", "expect": "维修记录", "type": "semantic"},
+
+    {"file": "承揽_定作合同_GF-2000-0302.docx", "question": "定作物什么时候交货？", "expect": "交货期限", "type": "keyword"},
+    {"file": "承揽_定作合同_GF-2000-0302.docx", "question": "材料由谁提供？", "expect": "承揽人提供的材料", "type": "keyword"},
+    {"file": "承揽_定作合同_GF-2000-0302.docx", "question": "对材料有异议要在多久内提出？", "expect": "提出异议的期限", "type": "keyword"},
+    {"file": "承揽_定作合同_GF-2000-0302.docx", "question": "图纸不合理怎么处理？", "expect": "书面异议", "type": "keyword"},
+    {"file": "承揽_定作合同_GF-2000-0302.docx", "question": "包装费用由谁负担？", "expect": "包装要求及费用负担", "type": "keyword"},
+    {"file": "承揽_定作合同_GF-2000-0302.docx", "question": "可以把活转给别人做吗？", "expect": "允许第三人完成", "type": "keyword"},
+    {"file": "承揽_定作合同_GF-2000-0302.docx", "question": "定作物按什么标准验收？", "expect": "检验标准", "type": "keyword"},
+    {"file": "承揽_定作合同_GF-2000-0302.docx", "question": "东西做坏了谁负责？", "expect": "检验标准", "type": "semantic"},
+
+    {"file": "服务_北京专业技术培训服务合同.docx", "question": "培训费一共多少钱？", "expect": "培训服务费合计", "type": "keyword"},
+    {"file": "服务_北京专业技术培训服务合同.docx", "question": "不想学了能退钱吗？", "expect": "退费条款", "type": "semantic"},
+    {"file": "服务_北京专业技术培训服务合同.docx", "question": "机构擅自改课程算违约吗？", "expect": "擅自变更培训服务计划", "type": "keyword"},
+    {"file": "服务_北京专业技术培训服务合同.docx", "question": "学员要按时交培训费吗？", "expect": "足额支付培训费用", "type": "keyword"},
+
+    {"file": "建设_家庭居室装饰装修工程施工合同_GF-2000-0207.docx", "question": "装修工程在什么地方、做什么内容？", "expect": "工程内容及做法", "type": "keyword"},
+    {"file": "建设_家庭居室装饰装修工程施工合同_GF-2000-0207.docx", "question": "施工图纸由谁提供？", "expect": "施工图纸", "type": "keyword"},
+    {"file": "建设_家庭居室装饰装修工程施工合同_GF-2000-0207.docx", "question": "业主开工前要做什么准备？", "expect": "发包人义务", "type": "keyword"},
+    {"file": "建设_家庭居室装饰装修工程施工合同_GF-2000-0207.docx", "question": "施工安全谁负责？", "expect": "安全施工操作规范", "type": "keyword"},
+    {"file": "建设_家庭居室装饰装修工程施工合同_GF-2000-0207.docx", "question": "装修方案还能改吗？", "expect": "工程变更", "type": "semantic"},
+
+    {"file": "租赁_房屋租赁合同.docx", "question": "房屋租金多少钱、怎么付？", "expect": "租金", "type": "keyword"},
+    {"file": "租赁_房屋租赁合同.docx", "question": "押金什么时候退？", "expect": "押金", "type": "semantic"}
+  ],
+  "out_of_scope": [
+    "今天天气怎么样？",
+    "帮我写一首关于秋天的诗",
+    "明天股票会涨吗？"
+  ]
+}
