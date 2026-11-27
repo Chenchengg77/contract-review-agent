@@ -845,12 +845,36 @@ def eval_metrics() -> dict:
     if qa_p.exists():
         qa_cases = json.loads(qa_p.read_text(encoding="utf-8")).get("cases", [])
 
+    # 检索消融结果（离线脚本产出）
+    ablation = None
+    ab_p = config.RESULTS_DIR / "retrieval_ablation.json"
+    if ab_p.exists():
+        ab = json.loads(ab_p.read_text(encoding="utf-8"))
+        strategies = ab.get("strategies", {})
+        ablation = {
+            "generated_at": ab.get("generated_at", ""),
+            "cases": ab.get("cases", 0),
+            "refusal": (ab.get("refusal") or {}).get("rate"),
+            "rows": [
+                {
+                    "name": name,
+                    "hit1": strategies.get(name, {}).get("hit@1"),
+                    "hit3": strategies.get(name, {}).get("hit@3"),
+                    "hit5": strategies.get(name, {}).get("hit@5"),
+                    "mrr": strategies.get(name, {}).get("mrr@5"),
+                }
+                for name in ("bm25", "vector", "hybrid", "hybrid_rr")
+                if name in strategies
+            ],
+        }
+
     return {
         "summary": data.get("summary", {}),
         "before": before,
         "cases": cases,
         "qa_cases": qa_cases,
         "per_contract": data.get("per_contract", []),
+        "ablation": ablation,
     }
 
 

@@ -7,6 +7,7 @@ const before = ref<any>(null)
 const cases = ref<any[]>([])
 const qaCases = ref<any[]>([])
 const per = ref<any[]>([])
+const ablation = ref<any>(null)
 
 onMounted(async () => {
   try {
@@ -16,10 +17,23 @@ onMounted(async () => {
     cases.value = data.cases || []
     qaCases.value = data.qa_cases || []
     per.value = data.per_contract || []
+    ablation.value = data.ablation || null
   } catch {
     /* ignore */
   }
 })
+
+const STRATEGY_LABEL: Record<string, string> = {
+  bm25: '纯 BM25（关键词）',
+  vector: '纯向量（语义）',
+  hybrid: '混合（BM25 + 向量 RRF）',
+  hybrid_rr: '混合 + Rerank（线上默认）',
+}
+
+function bestOf(key: string): number {
+  const rows = ablation.value?.rows || []
+  return Math.max(...rows.map((r: any) => Number(r[key]) || 0))
+}
 
 const pct = (v: number | undefined | null) => (v == null ? '-' : (v * 100).toFixed(2) + '%')
 
@@ -112,6 +126,46 @@ const metrics = computed(() => {
           </div>
         </div>
         <div class="cause">原因：{{ c.root_cause }}</div>
+      </div>
+    </div>
+
+    <!-- 检索消融 -->
+    <div v-if="ablation && ablation.rows.length" class="compare">
+      <div class="compare-title">
+        检索消融：4 种检索策略对比
+        <span class="compare-sub">{{ ablation.cases }} 条金标 · {{ ablation.generated_at }}</span>
+      </div>
+
+      <div class="atable">
+        <div class="at-row at-head">
+          <span>策略</span>
+          <span>Hit@1</span>
+          <span>Hit@3</span>
+          <span>Hit@5</span>
+          <span>MRR@5</span>
+        </div>
+        <div v-for="r in ablation.rows" :key="r.name" class="at-row" :class="{ hl: r.name === 'hybrid_rr' }">
+          <span class="at-name">{{ STRATEGY_LABEL[r.name] || r.name }}</span>
+          <span :class="{ best: r.hit1 === bestOf('hit1') }">{{ pct(r.hit1) }}</span>
+          <span :class="{ best: r.hit3 === bestOf('hit3') }">{{ pct(r.hit3) }}</span>
+          <span :class="{ best: r.hit5 === bestOf('hit5') }">{{ pct(r.hit5) }}</span>
+          <span :class="{ best: r.mrr === bestOf('mrr') }">{{ Number(r.mrr).toFixed(3) }}</span>
+        </div>
+      </div>
+
+      <div class="ablation-notes">
+        <div class="note">
+          <b>向量补语义</b>：混合让 Hit@3 从 63.3% → <b>80.0%</b>（+16.7pt），口语问法（“钱什么时候给我”）能被召回
+        </div>
+        <div class="note">
+          <b>Rerank 补精度</b>：Hit@1 从 46.7% → <b>63.3%</b>，MRR 0.637 → <b>0.726</b>，正确条款排得更靠前
+        </div>
+        <div class="note">
+          <b>只用向量也不行</b>：Hit@3 只有 70%，比混合低 10pt——丢了条款号的精确匹配
+        </div>
+        <div class="note">
+          <b>库外拒答</b>：3/3（评测时强制开启护栏）
+        </div>
       </div>
     </div>
 
@@ -217,6 +271,62 @@ const metrics = computed(() => {
   border-radius: 12px;
   overflow: hidden;
   margin-bottom: 18px;
+}
+/* 检索消融表 */
+.atable {
+  border: 1px solid #eef2f7;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.at-row {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr 1fr 1fr 1fr;
+  padding: 11px 16px;
+  font-size: 13px;
+  color: #334155;
+  border-bottom: 1px solid #f1f5f9;
+  align-items: center;
+}
+.at-row:last-child {
+  border-bottom: none;
+}
+.at-head {
+  background: #f8fafc;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+.at-row.hl {
+  background: #f7fbf9;
+}
+.at-name {
+  font-weight: 500;
+}
+.at-row span.best {
+  color: #0f766e;
+  font-weight: 700;
+}
+.at-row > span:not(.at-name) {
+  text-align: center;
+}
+.at-head > span:not(:first-child) {
+  text-align: center;
+}
+.ablation-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ablation-notes .note {
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: #475569;
+  padding-left: 12px;
+  border-left: 2px solid #e2e8f0;
+}
+.ablation-notes .note b {
+  color: #0f172a;
 }
 .ct-row {
   display: grid;
