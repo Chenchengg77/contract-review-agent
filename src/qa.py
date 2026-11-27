@@ -32,6 +32,12 @@ _SYSTEM = (
 )
 
 
+def _cite(hit: dict) -> str:
+    """条款号去掉尾部的顿号/点，避免「五、、第六条」这种拼接。"""
+    label = (hit.get("meta", {}).get("clause_no") or "").strip().rstrip("、.．,，")
+    return label or "正文"
+
+
 def _build_context(hits: list[dict]) -> str:
     parts = []
     for h in hits:
@@ -89,7 +95,7 @@ def answer_question(
         "completion_tokens": resp.usage.completion_tokens,
         "total_tokens": resp.usage.total_tokens,
     }
-    citations = sorted({h["meta"].get("clause_no") or "正文" for h in hits})
+    citations = sorted({_cite(h) for h in hits})
     return {"answer": answer, "citations": citations, "usage": usage, "refused": False, "guard": guard_why}
 
 
@@ -206,7 +212,7 @@ def answer_with_tools(
         # 模型/网关不支持 tool calling：退回普通 RAG 回答
         return answer_question(path, question, client, history, review_ctx)
 
-    citations = sorted({h["meta"].get("clause_no") or "正文" for h in hits})
+    citations = sorted({_cite(h) for h in hits})
     return {
         "answer": answer,
         "citations": citations,
@@ -249,7 +255,7 @@ def stream_answer_with_tools(
         yield from stream_answer_question(path, question, client, history, review_ctx)
         return
 
-    citations = sorted({h["meta"].get("clause_no") or "正文" for h in hits})
+    citations = sorted({_cite(h) for h in hits})
     yield f"event: tools\ndata: {json.dumps({'tools': tools_used}, ensure_ascii=False)}\n\n"
     yield f"event: citations\ndata: {json.dumps({'citations': citations}, ensure_ascii=False)}\n\n"
 
@@ -293,7 +299,7 @@ def stream_answer_question(
         + f"【合同原文片段】\n{context}\n\n【用户问题】\n{question}",
     })
 
-    citations = sorted({h["meta"].get("clause_no") or "正文" for h in hits})
+    citations = sorted({_cite(h) for h in hits})
     yield f"event: citations\ndata: {json.dumps({'citations': citations}, ensure_ascii=False)}\n\n"
 
     stream = client.chat.completions.create(

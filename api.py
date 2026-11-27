@@ -51,6 +51,78 @@ except Exception:  # noqa: BLE001
     pass
 
 
+# ---- 空库时自动补演示审查记录（线上重启后看板不至于全空）----
+_DEMO_REVIEWS = [
+    # (合同文件, 高, 中, 低, 几天前)
+    ("买卖_二手车买卖合同_GF-2015-0120.docx", 2, 4, 7, 6),
+    ("买卖_家具买卖合同_GF-2000-0105.docx", 1, 5, 7, 5),
+    ("租赁_房屋租赁合同.docx", 3, 3, 7, 4),
+    ("承揽_定作合同_GF-2000-0302.docx", 0, 6, 7, 3),
+    ("服务_上海地下管线测量技术服务合同.docx", 2, 2, 9, 2),
+    ("建设_建设工程施工合同_GF-2017-0201.docx", 1, 4, 8, 1),
+    ("买卖_二手车买卖合同_GF-2015-0120.docx", 0, 3, 10, 0),
+]
+
+_DEMO_CLAUSES = [
+    ("付款条款", "偏离", "未约定逾期付款的利息标准，建议补充"),
+    ("违约责任", "偏离", "违约金按日千分之五且未设上限，明显偏高"),
+    ("保密条款", "缺失", "未约定保密义务与保密期限"),
+    ("知识产权", "缺失", "未约定成果归属，存在权属争议风险"),
+    ("争议解决", "偏离", "约定仲裁但未明确仲裁机构"),
+    ("交付与验收", "合规", "交付时间与验收标准均已明确"),
+    ("质量保证", "合规", "质保期与维修责任约定完整"),
+]
+
+
+def _seed_demo_reviews() -> None:
+    """只在完全没有审查记录时执行一次，避免覆盖真实数据。"""
+    from src.auth import list_reviews as _list
+
+    if _list(None, 1):
+        return
+    demo = next((u for u in auth.list_users() if u["username"] == "demo"), None)
+    if not demo:
+        return
+
+    now = time.time()
+    for i, (name, high, mid, low, days) in enumerate(_DEMO_REVIEWS):
+        judgments = []
+        pool = _DEMO_CLAUSES
+        for k in range(min(high, 3)):
+            clause, verdict, reason = pool[k % len(pool)]
+            judgments.append({
+                "clause": clause,
+                "severity": "高",
+                "verdict": verdict,
+                "reason": reason,
+            })
+        for k in range(min(mid, 2)):
+            clause, verdict, reason = pool[(k + 3) % len(pool)]
+            judgments.append({
+                "clause": clause,
+                "severity": "中",
+                "verdict": verdict,
+                "reason": reason,
+            })
+        created = now - days * 86400 - (i * 37 % 12) * 3600
+        auth.add_review(
+            demo["id"],
+            name,
+            high,
+            mid,
+            low,
+            judgments,
+            duration=round(12 + (i * 7) % 8 + 0.4, 1),
+            created_at=created,
+        )
+
+
+try:
+    _seed_demo_reviews()
+except Exception:  # noqa: BLE001
+    pass
+
+
 def get_current_user(authorization: str | None = Header(default=None)) -> dict:
     """从 Authorization: Bearer <token> 解析当前用户。"""
     if not authorization or not authorization.startswith("Bearer "):

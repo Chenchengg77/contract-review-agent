@@ -8,6 +8,9 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
+# 本地数据库不进镜像（启动时自动建库；避免把用户数据打包进去）
+data/app.db
+
 # 前端依赖与构建产物（Dockerfile 内会重新构建）
 frontend/node_modules/
 frontend/dist/
