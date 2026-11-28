@@ -20,6 +20,7 @@
 - [界面预览](#界面预览)
 - [功能矩阵](#功能矩阵)
 - [架构](#架构)
+- [LangGraph 主工作流](#langgraph-主工作流)
 - [技术栈](#技术栈)
 - [核心设计（为什么这么做）](#核心设计为什么这么做)
 - [评测结果](#评测结果)
@@ -125,30 +126,48 @@ flowchart LR
 
 更细的分层图、时序图、护栏决策、数据模型见 **[docs/architecture.md](docs/architecture.md)**。
 
-### 审查流水线（LangGraph 状态图，主链路）
+---
 
-**两种入口共用同一张图**：`/api/review` 走「快速模式」（自动确认），`/api/review_graph` 走「人工确认模式」。
+## LangGraph 主工作流
+
+核心链路（解析 / 抽取 / 判定 / 修订）本身是确定性的，**编排**交给 LangGraph 状态图。
+遇到高风险条款时在 `confirm` 节点 `interrupt` 暂停，人确认后 `Command(resume)` 从断点继续；
+每个节点的状态由 checkpointer 存成快照。
 
 ```mermaid
-flowchart LR
-    S([START]) --> P["parse<br/>解析"]
-    P --> E["extract<br/>抽取 13 类条款"]
-    E --> A["assess<br/>规则 + 语义判定"]
+flowchart TB
+    S((START)) --> P["parse<br/>解析 DOCX"]
+    P --> E["extract<br/>抽取 13 类条款<br/>证据必须原文可搜"]
+    E --> A["assess<br/>规则层 + 语义层判定"]
     A --> RV["revise<br/>偏离/冲突生成修订建议"]
     RV --> C{"confirm<br/>存在高风险?"}
-    C -- "否 / 快速模式" --> R["report<br/>生成报告"]
-    C -- "是 & 人工确认模式" --> I["interrupt<br/>暂停，等人工确认"]
+    C -- "否 / 快速模式" --> R["report<br/>生成 Markdown 报告"]
+    C -- "是 / 人工确认模式" --> I["interrupt<br/>暂停，返回 pending"]
     I -- "Command(resume)" --> R
-    R --> EN([END])
+    R --> EN((END))
+    I -. 写入 .-> CK[("checkpointer<br/>MemorySaver")]
+    R -. 写入 .-> CK
 ```
 
-| 模式 | 入口 | 行为 |
-|---|---|---|
-| **快速模式** | `POST /api/review` | `auto_confirm=true`，一条直线跑完（约 16~34s） |
-| **人工确认模式** | `POST /api/review_graph` | 有高风险时 `interrupt` 暂停 → 返回 `pending` + 清单 → `Command(resume=...)` **从断点继续**，不重跑前面的 LLM 步骤 |
-| 状态保存 | — | checkpointer 持有（当前 `MemorySaver`，服务重启会丢，见[已知局限](#已知局限诚实记录)） |
+**两条入口，同一套节点**
 
-> 两条路径共用同一套节点，输出结构一致（`process` / `overview` / `judgments`，含 `revision` 字段）。
+| 入口 | 模式 | 行为 |
+|---|---|---|
+| `POST /api/review` | 快速模式 | `auto_confirm=true`，一口气跑完（约 16~34s） |
+| `POST /api/review_graph` | 人工确认 | 有高风险先暂停 → 返回 `pending` + `thread_id` + 高风险清单 |
+| `POST /api/review_graph/resume` | — | 传 `thread_id` + `action`/`changes`，**从断点继续，不重跑前面的 LLM 调用** |
+
+**为什么用状态图而不是顺序函数**
+
+| 场景 | 顺序函数 | 状态图 |
+|---|---|---|
+| 高风险要先让人确认 | 做不到 | `interrupt` 原生支持 |
+| 确认后继续 | 只能整条重跑（重复花 token） | `resume` 从断点继续 |
+| 人推翻 AI 的判定 | 不支持 | 传 `changes` 覆盖后再生成报告 |
+| 后续加一步（如"再核一遍法条"） | 改函数签名、层层传参 | `add_node` + `add_edge` |
+
+> 两条路径输出结构一致：`process`（段落 / 条款 / 耗时 / tokens）、`overview`（高 / 中 / 低）、`judgments`（含 `revision`）。
+> 局限：checkpointer 目前是 `MemorySaver`（进程内存），服务重启后待确认任务会失效，上生产应换 `SqliteSaver`。
 
 ---
 
