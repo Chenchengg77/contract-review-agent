@@ -184,7 +184,8 @@ flowchart LR
     P --> E["extract<br/>抽取 13 类条款"]
     E --> A["assess<br/>规则 + 语义判定"]
     A --> RV["revise<br/>修订建议"]
-    RV --> C{"confirm<br/>存在高风险?"}
+    RV --> BA["basis<br/>判定依据（playbook）"]
+    BA --> C{"confirm<br/>存在高风险?"}
     C -- "否 / 快速模式" --> R["report"]
     C -- "是 & 人工确认" --> I["interrupt<br/>暂停，返回 pending"]
     I -- "Command(resume)" --> R

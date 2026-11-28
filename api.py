@@ -626,6 +626,7 @@ def _run_review(path: Path, focus: str = "", perspective: str = "") -> dict:
         "process": process,
         "overview": {"high": len(high), "mid": len(mid), "low": len(low)},
         "judgments": judgments,
+        "basis_attached": values.get("basis_attached", 0),
     }
 
 
@@ -916,6 +917,7 @@ def _graph_result(values: dict, tid: str, elapsed: float) -> dict:
         "paragraphs": values.get("paragraphs", []),
         "report": values.get("report", ""),
         "process": values.get("process", {}),
+        "basis_attached": values.get("basis_attached", 0),
         "overview": _summarize(judgments),
         "usage": values.get("usage", {}),
         "elapsed": elapsed,

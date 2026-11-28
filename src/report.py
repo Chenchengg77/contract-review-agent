@@ -69,7 +69,19 @@ def generate_markdown(
             lines.append(f"#### {j['clause']} —— {j['verdict']}")
             lines.append(f"- **问题**：{j['reason']}")
             lines.append(f"- **原文定位**：{evidence}")
-            if j["verdict"] in ("偏离", "缺失", "冲突") and entry.get("standard_text"):
+
+            basis = j.get("basis") or {}
+            if basis.get("must_contain"):
+                lines.append(f"- **必备要素**：{'；'.join(basis['must_contain'])}")
+            if basis.get("red_flags"):
+                lines.append(f"- **判定红线**：{'；'.join(basis['red_flags'])}")
+            if basis.get("standard_text"):
+                lines.append(f"- **示范条款**：{basis['standard_text']}")
+            ref = basis.get("legal_ref")
+            if ref:
+                title = f"（{ref.get('title')}）" if ref.get("title") else ""
+                lines.append(f"- **法律参考**：《{ref.get('law', '')}》{ref.get('article', '')}{title}")
+            elif j["verdict"] in ("偏离", "缺失", "冲突") and entry.get("standard_text"):
                 lines.append(f"- **参考建议**：{entry['standard_text']}")
             lines.append("")
 

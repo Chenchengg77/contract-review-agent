@@ -22,6 +22,7 @@ import config
 from src.parser import parse, clause_headings
 from src import extract as EX
 from src import revision
+from src import report_agent
 from src.assess import assess, _find_clause_text
 from src.report import generate_markdown
 
@@ -36,6 +37,7 @@ class ReviewState(TypedDict, total=False):
     paragraphs: list
     clauses: list
     judgments: list
+    basis_attached: int
     human_review: dict
     report: str
     usage: dict
@@ -118,6 +120,16 @@ def revise_node(state: ReviewState) -> dict:
     return {"judgments": judgments}
 
 
+def basis_node(state: ReviewState) -> dict:
+    """给判定补「判定依据」（playbook 必备要素 / 红线 / 示范条款 + 可选法条）。纯代码，不调模型。"""
+    judgments = state.get("judgments", []) or []
+    try:
+        attached = report_agent.build_basis(judgments, _get_types())
+    except Exception:  # noqa: BLE001
+        attached = 0
+    return {"judgments": judgments, "basis_attached": attached}
+
+
 def confirm_node(state: ReviewState) -> dict:
     """高风险条款需人工确认；无高风险或快速模式则直接通过。"""
     high_risk = [j for j in state.get("judgments", []) if j.get("severity") == "高"]
@@ -176,6 +188,7 @@ def build_graph(checkpointer=None):
     g.add_node("extract", extract_node)
     g.add_node("assess", assess_node)
     g.add_node("revise", revise_node)
+    g.add_node("basis", basis_node)
     g.add_node("confirm", confirm_node)
     g.add_node("report", report_node)
 
@@ -183,7 +196,8 @@ def build_graph(checkpointer=None):
     g.add_edge("parse", "extract")
     g.add_edge("extract", "assess")
     g.add_edge("assess", "revise")
-    g.add_edge("revise", "confirm")
+    g.add_edge("revise", "basis")
+    g.add_edge("basis", "confirm")
     g.add_edge("confirm", "report")
     g.add_edge("report", END)
 

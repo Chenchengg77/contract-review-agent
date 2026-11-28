@@ -320,6 +320,28 @@ function badgeStyle(color: string) {
                     </td>
                     <td>
                       <div class="reason">{{ j.reason }}</div>
+                      <div v-if="j.basis" class="basis">
+                        <div class="basis-head">判定依据</div>
+                        <div v-if="j.basis.must_contain?.length" class="basis-row">
+                          <span class="basis-k">必备要素</span>
+                          <span class="basis-v">{{ j.basis.must_contain.join(' · ') }}</span>
+                        </div>
+                        <div v-if="j.basis.red_flags?.length" class="basis-row">
+                          <span class="basis-k">判定红线</span>
+                          <span class="basis-v">{{ j.basis.red_flags.join('；') }}</span>
+                        </div>
+                        <div v-if="j.basis.standard_text" class="basis-row">
+                          <span class="basis-k">示范条款</span>
+                          <span class="basis-v">{{ j.basis.standard_text }}</span>
+                        </div>
+                        <div v-if="j.basis.legal_ref" class="basis-row">
+                          <span class="basis-k">法律参考</span>
+                          <span class="basis-v">
+                            《{{ j.basis.legal_ref.law }}》{{ j.basis.legal_ref.article }}
+                            <template v-if="j.basis.legal_ref.title">（{{ j.basis.legal_ref.title }}）</template>
+                          </span>
+                        </div>
+                      </div>
                       <div v-if="j.revision" class="revision">
                         <span class="rev-text">📝 修订建议：{{ j.revision }}</span>
                         <button class="copy-btn" @click="copyText(j.revision)">复制</button>
@@ -650,6 +672,33 @@ function badgeStyle(color: string) {
 .reason {
   color: #475569;
   line-height: 1.6;
+}
+.basis {
+  margin-top: 6px;
+  font-size: 11.5px;
+  background: #fdfbf5;
+  border: 1px solid #efe7d6;
+  border-radius: 3px;
+  padding: 8px 10px;
+}
+.basis-head {
+  font-size: 10.5px;
+  color: #a3936b;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.basis-row {
+  display: flex;
+  gap: 8px;
+  line-height: 1.7;
+}
+.basis-k {
+  flex: 0 0 52px;
+  color: #a3936b;
+}
+.basis-v {
+  flex: 1;
+  color: #6b5b3a;
 }
 .revision {
   margin-top: 6px;
